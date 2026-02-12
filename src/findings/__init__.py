@@ -1,0 +1,1 @@
+"""Structured findings extraction."""

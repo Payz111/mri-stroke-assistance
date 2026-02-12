@@ -1,0 +1,29 @@
+# Baseline experiment: 3D U-Net on ISLES'22
+# Usage: python scripts/train.py --config-name baseline
+
+defaults:
+  - /default
+
+experiment:
+  name: "baseline_unet3d"
+  description: "3D U-Net baseline on ISLES'22 DWI+ADC+FLAIR"
+
+model:
+  name: "unet3d"
+  in_channels: 3
+  out_channels: 1
+  features: [32, 64, 128, 256]
+  dropout: 0.1
+
+training:
+  epochs: 100
+  batch_size: 2
+  learning_rate: 1.0e-4
+  optimizer: "adamw"
+  scheduler: "cosine"
+
+loss:
+  type: "dice_focal"
+  dice_weight: 0.5
+  focal_weight: 0.5
+  focal_gamma: 2.0

@@ -1,0 +1,37 @@
+# Evaluation metrics configuration
+
+metrics:
+  segmentation:
+    - dice
+    - hausdorff_95
+    - volume_mae
+    - volume_correlation
+
+  lesion_wise:
+    - lesion_recall
+    - lesion_precision
+    - lesion_f1
+    iou_threshold: 0.1  # IoU threshold for lesion-wise matching
+
+  stratification:
+    by_size:
+      - name: "tiny"
+        max_ml: 1.0
+      - name: "small"
+        min_ml: 1.0
+        max_ml: 10.0
+      - name: "medium"
+        min_ml: 10.0
+        max_ml: 50.0
+      - name: "large"
+        min_ml: 50.0
+    by_location:
+      - "supratentorial"
+      - "posterior_fossa"
+    by_count:
+      - "single"
+      - "multifocal"
+
+  report_quality:
+    - hallucination_rate
+    - completeness

@@ -1,0 +1,81 @@
+# Default configuration for MRI Stroke Assist
+# Override with experiment-specific configs via Hydra
+
+project:
+  name: "mri-stroke-assist"
+  version: "0.1.0"
+  seed: 42
+
+paths:
+  data_raw: "data/raw/isles22"
+  data_processed: "data/processed"
+  splits: "data/splits"
+  outputs: "outputs"
+  models: "outputs/models"
+  predictions: "outputs/predictions"
+
+data:
+  dataset: "isles22"
+  modalities: ["dwi", "adc", "flair"]
+  spacing: [1.0, 1.0, 1.0]  # target spacing in mm
+  orientation: "RAS"
+
+preprocessing:
+  resample: true
+  target_spacing: [1.0, 1.0, 1.0]
+  brain_extraction: false  # optional, enable if needed
+  intensity_norm: "zscore"  # zscore | minmax | percentile
+  register_to: "dwi"  # co-register other modalities to DWI space
+
+qc:
+  min_slices: 20
+  max_spacing_mm: 5.0
+  max_nan_fraction: 0.01
+  require_modalities: ["dwi", "adc", "flair"]
+
+model:
+  name: "unet3d"
+  in_channels: 3  # DWI, ADC, FLAIR
+  out_channels: 1  # lesion probability
+  features: [32, 64, 128, 256]
+  dropout: 0.1
+
+training:
+  epochs: 100
+  batch_size: 2
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  optimizer: "adamw"
+  scheduler: "cosine"
+  num_workers: 4
+  pin_memory: true
+  fold: 0
+  num_folds: 5
+
+loss:
+  type: "dice_focal"
+  dice_weight: 0.5
+  focal_weight: 0.5
+  focal_gamma: 2.0
+
+augmentation:
+  spatial:
+    rotate_range: [-0.26, 0.26]  # ~15 degrees in radians
+    scale_range: [0.9, 1.1]
+    flip_axes: [0]  # left-right only
+  intensity:
+    gamma_range: [0.7, 1.5]
+    noise_std: 0.1
+    bias_field: true
+
+postprocessing:
+  threshold: 0.5
+  min_lesion_voxels: 50
+  apply_dwi_adc_consistency: true
+  edge_exclusion_mm: 3.0
+  morphological_cleanup: true
+
+inference:
+  tta: false  # test-time augmentation
+  ensemble: true  # ensemble across folds
+  device: "cuda"

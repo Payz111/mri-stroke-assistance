@@ -1,0 +1,35 @@
+# Augmented experiment: heavier data augmentation
+# Usage: python scripts/train.py --config-name augmented
+
+defaults:
+  - /default
+
+experiment:
+  name: "augmented_unet3d"
+  description: "3D U-Net with stronger augmentation on ISLES'22"
+
+model:
+  name: "unet3d"
+  in_channels: 3
+  out_channels: 1
+  features: [32, 64, 128, 256]
+  dropout: 0.2
+
+training:
+  epochs: 150
+  batch_size: 2
+  learning_rate: 1.0e-4
+  optimizer: "adamw"
+  scheduler: "cosine"
+
+augmentation:
+  spatial:
+    rotate_range: [-0.35, 0.35]  # ~20 degrees
+    scale_range: [0.85, 1.15]
+    flip_axes: [0]
+    elastic_deform: true
+  intensity:
+    gamma_range: [0.5, 2.0]
+    noise_std: 0.15
+    bias_field: true
+    random_blur: true

@@ -1,0 +1,29 @@
+# V2: CT Perfusion configuration
+
+defaults:
+  - /default
+
+data:
+  dataset: "isles24"
+  modalities: ["ncct", "cta", "ctp_tmax", "ctp_cbf", "ctp_cbv", "ctp_mtt"]
+
+thresholds:
+  hypoperfusion:
+    map: "tmax"
+    operator: ">="
+    value_seconds: 6.0
+  core:
+    map: "cbf"
+    operator: "<="
+    value_rcbf: 0.30  # relative CBF
+
+mismatch:
+  target_profile:
+    core_max_ml: 70.0
+    mismatch_ratio_min: 1.8
+    mismatch_volume_min_ml: 15.0
+
+perfusion_qc:
+  require_maps: ["tmax", "cbf"]
+  max_nan_fraction: 0.01
+  tmax_max_reasonable: 100.0  # seconds
