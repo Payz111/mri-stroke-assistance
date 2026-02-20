@@ -11,7 +11,7 @@
 **Название:** Скачать ISLES'22 и провести EDA
 **Фаза:** Phase 0 - Explore
 **Приоритет:** High
-**Статус:** ⬜ Not Started
+**Статус:** 🟡 In Progress (70% complete)
 
 ---
 
@@ -23,28 +23,34 @@
 
 ## Чек-лист выполнения
 
-### Скачивание данных
-- [ ] Скачать ISLES 2022 с Zenodo (https://zenodo.org/record/7153326)
-- [ ] Распаковать в `data/raw/isles22/`
-- [ ] Проверить целостность: все кейсы, модальности (DWI, ADC, FLAIR), маски
+### Скачивание данных ✅ DONE
+- [x] Скачать ISLES 2022 с Zenodo (https://zenodo.org/record/7153326)
+- [x] Распаковать в `data/raw/isles22/`
+- [x] Проверить целостность: все кейсы, модальности (DWI, ADC, FLAIR), маски
+  - 250 кейсов ✓
+  - Все модальности присутствуют ✓
+  - Masks в derivatives/ ✓
 
-### EDA (Exploratory Data Analysis)
-- [ ] Создать `notebooks/01_eda_isles22.ipynb`
-- [ ] Сколько кейсов всего
-- [ ] Распределение объёмов очагов (гистограмма)
-- [ ] Сколько кейсов < 1 ml (мелкие лакуны)
-- [ ] Сколько posterior fossa
-- [ ] Сколько мультифокальных
-- [ ] Spacing/размеры volumes (мин/макс/медиана)
-- [ ] Визуализация нескольких кейсов (DWI, ADC, FLAIR, маска)
-- [ ] Качество: есть ли явные артефакты?
+### EDA (Exploratory Data Analysis) ✅ DONE
+- [x] Создать `notebooks/01_eda_isles22.ipynb`
+- [x] Сколько кейсов всего — **250**
+- [x] Распределение объёмов очагов (гистограмма) — медиана 6.66 ml
+- [x] Сколько кейсов < 1 ml (мелкие лакуны) — **43 кейса (17.2%)**
+- [x] Сколько posterior fossa — TODO (требует анализа центра масс)
+- [x] Сколько мультифокальных — TODO (требует connected components)
+- [x] Spacing/размеры volumes (мин/макс/медиана)
+  - In-plane: 0.88-2.0 мм (медиана 2.0)
+  - Slice: 2.0-5.0 мм (медиана 2.0)
+  - Shapes: 112-256 x 112-256 x 25-76
+- [x] Визуализация нескольких кейсов (DWI, ADC, FLAIR, маска)
+- [x] Качество: найдено 3 кейса с пустыми масками
 
-### Splits
+### Splits ⏸️ TODO — СЛЕДУЮЩИЙ ШАГ
 - [ ] Определить 5-fold CV splits
 - [ ] Стратификация по объёму очага
 - [ ] Сохранить в `data/splits/fold_0.json` ... `fold_4.json`
 
-### Preprocessing smoke test
+### Preprocessing smoke test ⏸️ TODO
 - [ ] Загрузить 1 кейс через `src/data/isles22_dataset.py`
 - [ ] Проверить orientation, spacing, data types
 
@@ -61,10 +67,22 @@
 
 ## Заметки
 
+**Общие:**
 - ISLES'22: ~1.7 GB, NIfTI, BIDS формат
 - 250 train кейсов, test скрыт
 - Multi-center, multi-vendor — хороший тест на generalization
 - Zenodo URL: https://zenodo.org/record/7153326
+
+**Находки из EDA:**
+- Медиана объёма: 6.66 ml (маленькие очаги преобладают)
+- Стратификация: 43 tiny, 95 small, 79 medium, 30 large
+- **3 кейса с пустыми масками:** sub-strokecase0150, 0151, 0170 (требует проверки)
+- Spacing variability требует preprocessing с resampling
+
+**Технические проблемы:**
+- pyproject.toml нужен был fix для hatchling (packages = ["src"])
+- Python 3.14 используется для всех зависимостей
+- Windows cp1251 кодировка — избегать unicode в выводе
 
 ---
 
@@ -86,4 +104,4 @@
 ---
 
 **Создано:** 2026-02-12
-**Последнее обновление:** 2026-02-12
+**Последнее обновление:** 2026-02-19

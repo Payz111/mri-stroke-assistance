@@ -50,6 +50,9 @@ dev = [
     "black>=23.0",
     "ruff>=0.1",
     "pre-commit>=3.0",
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
+    "tqdm>=4.65",
 ]
 ants = [
     "antspyx>=0.4",
@@ -65,6 +68,9 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.black]
 line-length = 100
 target-version = ["py310"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

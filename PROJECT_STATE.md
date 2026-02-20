@@ -17,7 +17,7 @@ Status: IN PROGRESS
 
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
-| Gate A - Feasibility | 🟡 IN PROGRESS | 15% | Репо создано, ждём данные + EDA |
+| Gate A - Feasibility | 🟡 IN PROGRESS | 50% | Данные загружены, EDA проведён, метаданные собраны |
 | Gate B - Baseline Training | ⬜ NOT STARTED | 0% | |
 | Gate C - Evaluation | ⬜ NOT STARTED | 0% | |
 | Gate D - Structured Findings | ⬜ NOT STARTED | 0% | Schema готова (Pydantic) |
@@ -33,31 +33,44 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [ ] TASK-002: Скачать ISLES'22 и валидировать данные
+- [ ] TASK-002: Определить 5-fold CV splits со стратификацией
 
 ### Следующие задачи
-1. EDA датасета (notebooks/01_eda_isles22.ipynb)
-2. Определить splits (5-fold CV)
+1. Создать splits (5-fold CV, стратификация по размеру)
+2. Реализовать Dataset class (src/data/isles22_dataset.py)
 3. Реализовать preprocessing pipeline
 
 ---
 
 ## Выполнено (история)
 
-### Session 2 (2026-02-12) — Claude Code
-- [x] **TASK-001: Создание структуры репозитория** — ПОЛНОСТЬЮ ЗАВЕРШЕНО
-  - Создано 86 файлов, 55 Python модулей
-  - pyproject.toml (PyTorch, MONAI, nibabel, SimpleITK, Hydra, MLflow, Gradio)
-  - Makefile (setup, train, eval, demo, docker, test, lint)
-  - .gitignore, Dockerfile, LICENSE (MIT)
-  - GitHub Actions CI (lint + test)
-  - 5 YAML конфигов (default, baseline, augmented, metrics, v2_ctp)
-  - Полная Pydantic schema (V1 + V2) в src/findings/schema.py
-  - Все skeleton модули с stub functions и type hints
-  - 5 тестовых файлов (schema, QC, preprocessing, inference, report)
-  - Gradio demo skeleton (demo/app.py)
-  - 4 docs (PRD, Architecture, Model Card, Evaluation Report)
-  - Git инициализирован
+### Session 2 (2026-02-19) — Claude Code, TASK-001 + TASK-002 (частично)
+
+**TASK-001: Scaffolding ✅ ЗАВЕРШЕНО**
+- Создано 86 файлов, 55 Python модулей
+- pyproject.toml (PyTorch, MONAI, nibabel, SimpleITK, Hydra, MLflow, Gradio)
+- Makefile, .gitignore, Dockerfile, LICENSE (MIT)
+- GitHub Actions CI, 5 YAML конфигов
+- Полная Pydantic schema (V1 + V2) в src/findings/schema.py
+- Все skeleton модули, 5 тестовых файлов
+- Gradio demo skeleton, 4 docs
+- Git init + remote GitLab, initial commit + push
+
+**TASK-002: Данные + EDA 🟡 В ПРОЦЕССЕ**
+- ✅ ISLES 2022 скачан и распакован (~1.7 GB, 250 кейсов)
+- ✅ EDA ноутбук создан (notebooks/01_eda_isles22.ipynb)
+- ✅ Метаданные собраны для всех 250 кейсов (data/processed/isles22_metadata.csv)
+- ✅ Статистика: медиана 6.66 ml, диапазон 0-482 ml
+- ✅ Стратификация: 43 tiny (<1ml), 95 small, 79 medium, 30 large
+- ✅ Spacing проверен: большинство 2x2x2 мм, есть variability
+- ⚠️ **Найдено 3 кейса с пустыми масками** (0 voxels) — требует внимания
+- ⏸️ Splits (5-fold CV) — не создано, следующий шаг
+
+**Технические проблемы и решения:**
+1. **pyproject.toml fix:** Добавлен `[tool.hatch.build.targets.wheel] packages = ["src"]` для hatchling
+2. **Зависимости:** jupyter, ipykernel, tqdm добавлены в dev dependencies
+3. **Python версия:** Используется Python 3.14, packages установлены корректно
+4. **Кодировка:** Windows cp1251 — избегать unicode символов в выводе
 
 ### Session 1 (2026-02-04) — Claude Web
 - [x] Обсуждение концепции проекта
@@ -87,22 +100,37 @@ Status: IN PROGRESS
 
 | Файл | Описание | Статус |
 |------|----------|--------|
-| `PROJECT_STATE.md` | Этот файл — состояние проекта | ✅ |
+| `PROJECT_STATE.md` | Этот файл — состояние проекта | ✅ Обновлён |
 | `DECISIONS.md` | Архитектурные решения (10 ADR) | ✅ |
-| `CURRENT_TASK.md` | Детали текущей задачи | ✅ |
+| `CURRENT_TASK.md` | Детали текущей задачи | ✅ Обновлён |
 | `SESSION_START.md` | Протокол начала сессии | ✅ |
 | `src/` | Исходный код (skeleton) | ✅ 42 файла |
 | `src/findings/schema.py` | Pydantic V1+V2 schema | ✅ Готова |
 | `configs/` | YAML конфигурации | ✅ 5 файлов |
 | `tests/` | Тесты (skeleton + schema) | ✅ 5 файлов |
 | `demo/app.py` | Gradio demo | ✅ Skeleton |
-| `data/` | Датасеты | ⬜ Не загружено |
+| `data/raw/isles22/` | ISLES 2022 датасет | ✅ 250 кейсов |
+| `data/processed/isles22_metadata.csv` | Метаданные датасета | ✅ Собраны |
+| `notebooks/01_eda_isles22.ipynb` | EDA ноутбук | ✅ Создан и выполнен |
+| `data/splits/` | 5-fold CV splits | ⬜ Не создано |
 
 ---
 
 ## Известные проблемы / Blockers
 
-(пока нет)
+### 1. Пустые маски (3 кейса)
+- **Кейсы:** sub-strokecase0150, sub-strokecase0151, sub-strokecase0170
+- **Проблема:** Маски содержат 0 voxels
+- **Возможные причины:** отрицательные контроли, ошибки аннотации, очень мелкие очаги
+- **Решение:** Включить в обучение, но отследить отдельно в evaluation
+
+### 2. Variability в spacing
+- **Проблема:** Spacing варьируется от 0.88 до 2.0 мм (in-plane), 2.0-5.0 мм (slice thickness)
+- **Решение:** Preprocessing с resampling к единому spacing (1x1x1 мм или 2x2x2 мм)
+
+### 3. Python версии
+- **Проблема:** В системе установлены Python 3.11 и 3.14, packages в 3.14
+- **Решение:** Использовать явно Python 3.14 для всех команд
 
 ---
 
@@ -130,5 +158,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-02-12
+**Последнее обновление:** 2026-02-19
 **Обновил:** Claude Code (Session 2)
