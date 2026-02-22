@@ -17,7 +17,7 @@ Status: IN PROGRESS
 
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
-| Gate A - Feasibility | 🟡 IN PROGRESS | 50% | Данные загружены, EDA проведён, метаданные собраны |
+| Gate A - Feasibility | ✅ COMPLETE | 100% | Данные + EDA + splits готовы |
 | Gate B - Baseline Training | ⬜ NOT STARTED | 0% | |
 | Gate C - Evaluation | ⬜ NOT STARTED | 0% | |
 | Gate D - Structured Findings | ⬜ NOT STARTED | 0% | Schema готова (Pydantic) |
@@ -33,12 +33,13 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [ ] TASK-002: Определить 5-fold CV splits со стратификацией
+- [ ] TASK-003: Реализовать preprocessing pipeline (Phase 1)
 
 ### Следующие задачи
-1. Создать splits (5-fold CV, стратификация по размеру)
-2. Реализовать Dataset class (src/data/isles22_dataset.py)
-3. Реализовать preprocessing pipeline
+1. Dataset class (src/data/isles22_dataset.py)
+2. Preprocessing pipeline (registration, normalization)
+3. MONAI transforms
+4. Smoke test на 1 кейсе
 
 ---
 
@@ -56,15 +57,15 @@ Status: IN PROGRESS
 - Gradio demo skeleton, 4 docs
 - Git init + remote GitLab, initial commit + push
 
-**TASK-002: Данные + EDA 🟡 В ПРОЦЕССЕ**
+**TASK-002: Данные + EDA ✅ ЗАВЕРШЕНО**
 - ✅ ISLES 2022 скачан и распакован (~1.7 GB, 250 кейсов)
 - ✅ EDA ноутбук создан (notebooks/01_eda_isles22.ipynb)
 - ✅ Метаданные собраны для всех 250 кейсов (data/processed/isles22_metadata.csv)
 - ✅ Статистика: медиана 6.66 ml, диапазон 0-482 ml
 - ✅ Стратификация: 43 tiny (<1ml), 95 small, 79 medium, 30 large
 - ✅ Spacing проверен: большинство 2x2x2 мм, есть variability
-- ⚠️ **Найдено 3 кейса с пустыми масками** (0 voxels) — требует внимания
-- ⏸️ Splits (5-fold CV) — не создано, следующий шаг
+- ⚠️ **Найдено 3 кейса с пустыми масками** (0 voxels) — включены в splits
+- ✅ **5-fold CV splits созданы** (200 train / 50 val, стратификация по размеру)
 
 **Технические проблемы и решения:**
 1. **pyproject.toml fix:** Добавлен `[tool.hatch.build.targets.wheel] packages = ["src"]` для hatchling
@@ -112,7 +113,8 @@ Status: IN PROGRESS
 | `data/raw/isles22/` | ISLES 2022 датасет | ✅ 250 кейсов |
 | `data/processed/isles22_metadata.csv` | Метаданные датасета | ✅ Собраны |
 | `notebooks/01_eda_isles22.ipynb` | EDA ноутбук | ✅ Создан и выполнен |
-| `data/splits/` | 5-fold CV splits | ⬜ Не создано |
+| `data/splits/` | 5-fold CV splits | ✅ 5 folds созданы |
+| `scripts/create_splits.py` | Скрипт создания splits | ✅ Готов |
 
 ---
 
