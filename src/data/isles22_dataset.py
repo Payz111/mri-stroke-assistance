@@ -1,14 +1,12 @@
-"""PyTorch Dataset for the ISLES'22 ischemic-stroke segmentation challenge.
+"""PyTorch Dataset for the ISLES'22 ischemic-stroke segmentation challenge."""
 
-Loads DWI, ADC, FLAIR volumes and the corresponding lesion mask for each
-subject, returning them as a dictionary suitable for 3-D segmentation
-training pipelines.
-"""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
+import nibabel as nib
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -18,44 +16,100 @@ class ISLES22Dataset(Dataset):
     """Dataset class that serves ISLES'22 subjects.
 
     Each item is a dictionary with the keys:
-        - ``dwi``      : DWI volume tensor
-        - ``adc``      : ADC volume tensor
-        - ``flair``    : FLAIR volume tensor
-        - ``mask``     : Ground-truth lesion mask tensor
-        - ``metadata`` : dict of per-subject metadata (spacing, affine, …)
+        - ``dwi``      : DWI volume (C, D, H, W) float32
+        - ``adc``      : ADC volume (C, D, H, W) float32
+        - ``flair``    : FLAIR volume (C, D, H, W) float32
+        - ``mask``     : Ground-truth lesion mask (C, D, H, W) float32
+        - ``metadata`` : dict with subject_id, spacing, affine, shape
     """
 
     def __init__(
         self,
-        root_dir: str | Path,
+        data_root: str | Path,
+        derivatives_root: str | Path,
+        split_file: str | Path,
         split: str = "train",
         transform: Any | None = None,
     ) -> None:
-        """Initialise the dataset.
+        self.data_root = Path(data_root)
+        self.derivatives_root = Path(derivatives_root)
+        self.transform = transform
 
-        Parameters
-        ----------
-        root_dir:
-            Root directory that contains the ISLES'22 data
-            (expected sub-folders per subject).
-        split:
-            One of ``"train"``, ``"val"``, or ``"test"``.
-        transform:
-            Optional callable (e.g. a MONAI ``Compose``) applied to the
-            sample dictionary before it is returned.
-        """
-        raise NotImplementedError()
+        # Load split
+        with open(split_file) as f:
+            split_data = json.load(f)
+
+        self.subject_ids = split_data[split]
 
     def __len__(self) -> int:
-        """Return the number of subjects in this split."""
-        raise NotImplementedError()
+        return len(self.subject_ids)
+
+    def _get_paths(self, subject_id: str) -> dict[str, Path]:
+        """Resolve file paths for a subject."""
+        sub_path = self.data_root / subject_id / "ses-0001"
+        deriv_path = self.derivatives_root / subject_id / "ses-0001"
+
+        dwi_files = list(sub_path.glob("dwi/*dwi.nii.gz"))
+        adc_files = list(sub_path.glob("dwi/*adc.nii.gz"))
+        flair_files = list(sub_path.glob("anat/*FLAIR.nii.gz"))
+        mask_files = list(deriv_path.glob("*msk.nii.gz"))
+
+        if not (dwi_files and adc_files and flair_files and mask_files):
+            missing = []
+            if not dwi_files:
+                missing.append("DWI")
+            if not adc_files:
+                missing.append("ADC")
+            if not flair_files:
+                missing.append("FLAIR")
+            if not mask_files:
+                missing.append("mask")
+            raise FileNotFoundError(
+                f"Missing files for {subject_id}: {missing}"
+            )
+
+        return {
+            "dwi": dwi_files[0],
+            "adc": adc_files[0],
+            "flair": flair_files[0],
+            "mask": mask_files[0],
+        }
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        """Load and return the sample at *index*.
+        subject_id = self.subject_ids[index]
+        paths = self._get_paths(subject_id)
 
-        Returns
-        -------
-        dict
-            Keys: ``dwi``, ``adc``, ``flair``, ``mask``, ``metadata``.
-        """
-        raise NotImplementedError()
+        # Load NIfTI volumes
+        dwi_img = nib.load(paths["dwi"])
+        adc_img = nib.load(paths["adc"])
+        flair_img = nib.load(paths["flair"])
+        mask_img = nib.load(paths["mask"])
+
+        # Get data as float32 numpy arrays
+        dwi = dwi_img.get_fdata(dtype=np.float32)
+        adc = adc_img.get_fdata(dtype=np.float32)
+        flair = flair_img.get_fdata(dtype=np.float32)
+        mask = mask_img.get_fdata(dtype=np.float32)
+
+        # Binarize mask
+        mask = (mask > 0).astype(np.float32)
+
+        metadata = {
+            "subject_id": subject_id,
+            "spacing": dwi_img.header.get_zooms()[:3],
+            "affine": dwi_img.affine,
+            "shape": dwi.shape,
+        }
+
+        sample = {
+            "dwi": dwi,
+            "adc": adc,
+            "flair": flair,
+            "mask": mask,
+            "metadata": metadata,
+        }
+
+        if self.transform is not None:
+            sample = self.transform(sample)
+
+        return sample

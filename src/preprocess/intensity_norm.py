@@ -1,8 +1,5 @@
-"""Intensity normalisation routines for MRI volumes.
+"""Intensity normalisation routines for MRI volumes."""
 
-Provides z-score and percentile-based normalisation, optionally
-restricted to a foreground mask.
-"""
 from __future__ import annotations
 
 import numpy as np
@@ -14,20 +11,21 @@ def normalize_zscore(
 ) -> np.ndarray:
     """Z-score normalise *volume*, optionally within *mask*.
 
-    Parameters
-    ----------
-    volume:
-        3-D MRI intensity array.
-    mask:
-        Optional binary mask; if provided, mean and std are computed
-        only over the masked region but the entire volume is normalised.
-
-    Returns
-    -------
-    np.ndarray
-        Normalised volume with zero mean and unit variance (within mask).
+    Mean and std are computed over the masked region (or entire volume),
+    then the full volume is normalised.
     """
-    raise NotImplementedError()
+    if mask is not None:
+        roi = volume[mask > 0]
+    else:
+        roi = volume[volume > 0]  # exclude background zeros
+
+    mean = roi.mean()
+    std = roi.std()
+
+    if std < 1e-8:
+        return volume - mean
+
+    return (volume - mean) / std
 
 
 def normalize_percentile(
@@ -37,18 +35,15 @@ def normalize_percentile(
 ) -> np.ndarray:
     """Clip and rescale *volume* to the [lower, upper] percentile range.
 
-    Parameters
-    ----------
-    volume:
-        3-D MRI intensity array.
-    lower:
-        Lower percentile for clipping (default 1.0).
-    upper:
-        Upper percentile for clipping (default 99.0).
-
-    Returns
-    -------
-    np.ndarray
-        Volume scaled to the [0, 1] range after percentile clipping.
+    Returns volume scaled to [0, 1].
     """
-    raise NotImplementedError()
+    p_low = np.percentile(volume, lower)
+    p_high = np.percentile(volume, upper)
+
+    volume = np.clip(volume, p_low, p_high)
+
+    denom = p_high - p_low
+    if denom < 1e-8:
+        return np.zeros_like(volume)
+
+    return (volume - p_low) / denom

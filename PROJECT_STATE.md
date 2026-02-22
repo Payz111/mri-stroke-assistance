@@ -18,7 +18,7 @@ Status: IN PROGRESS
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
 | Gate A - Feasibility | ✅ COMPLETE | 100% | Данные + EDA + splits готовы |
-| Gate B - Baseline Training | ⬜ NOT STARTED | 0% | |
+| Gate B - Baseline Training | 🟡 IN PROGRESS | 30% | Preprocessing pipeline done |
 | Gate C - Evaluation | ⬜ NOT STARTED | 0% | |
 | Gate D - Structured Findings | ⬜ NOT STARTED | 0% | Schema готова (Pydantic) |
 | Gate E - Report Generation | ⬜ NOT STARTED | 0% | |
@@ -33,17 +33,25 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [ ] TASK-003: Реализовать preprocessing pipeline (Phase 1)
+- [x] TASK-003: Реализовать preprocessing pipeline (Phase 1) -- DONE
 
 ### Следующие задачи
-1. Dataset class (src/data/isles22_dataset.py)
-2. Preprocessing pipeline (registration, normalization)
-3. MONAI transforms
-4. Smoke test на 1 кейсе
+1. TASK-004: Baseline 3D U-Net training (Phase 2)
 
 ---
 
 ## Выполнено (история)
+
+### Session 3 (2026-02-21) -- Claude Code, TASK-003
+
+**TASK-003: Preprocessing Pipeline DONE**
+- Dataset class: src/data/isles22_dataset.py (BIDS loading, __getitem__ returns dict)
+- Intensity normalization: src/preprocess/intensity_norm.py (z-score, percentile)
+- MONAI transforms: src/data/transforms.py (ResampleToReference, NormalizePerModality, StackModalities)
+- Registration: src/preprocess/registration.py (SimpleITK rigid/affine + scipy resample fallback)
+- Pipeline: src/preprocess/pipeline.py (per-subject + batch preprocessing)
+- Smoke test: PASSED -- image (3,112,112,73), label (1,112,112,73), mask binary, 835 lesion voxels
+- Key finding: FLAIR has different spatial resolution (281x352x352 vs DWI 112x112x73) -- ResampleToReference solves this
 
 ### Session 2 (2026-02-19) — Claude Code, TASK-001 + TASK-002 (частично)
 
@@ -160,5 +168,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-02-19
-**Обновил:** Claude Code (Session 2)
+**Последнее обновление:** 2026-02-21
+**Обновил:** Claude Code (Session 3)

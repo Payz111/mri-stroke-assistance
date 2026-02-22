@@ -7,71 +7,68 @@
 
 ## Задача
 
-**ID:** TASK-003
-**Название:** Реализовать preprocessing pipeline
-**Фаза:** Phase 1 - Data & Preprocessing
+**ID:** TASK-004
+**Название:** Baseline 3D U-Net training
+**Фаза:** Phase 2 - Model Training
 **Приоритет:** High
-**Статус:** ⬜ Not Started
+**Статус:** Not Started
 
 ---
 
 ## Описание
 
-Реализовать полный preprocessing pipeline для подготовки MRI данных к обучению модели.
+Обучить baseline 3D U-Net модель сегментации инфарктного очага.
 
 ---
 
 ## Чек-лист выполнения
 
-### Dataset class
-- [ ] Реализовать `src/data/isles22_dataset.py`
-- [ ] Метод `__getitem__` возвращает dict: {dwi, adc, flair, mask, metadata}
-- [ ] Загрузка splits из JSON
-- [ ] Smoke test: загрузить 1 кейс
+### Модель
+- [ ] Реализовать `src/models/unet3d.py` (MONAI 3D U-Net)
+- [ ] Конфигурация модели через Hydra config
+- [ ] Loss function: Dice + BCE
 
-### Preprocessing components
-- [ ] `src/preprocess/registration.py` — co-registration ADC/FLAIR → DWI
-- [ ] `src/preprocess/intensity_norm.py` — z-score normalization
-- [ ] `src/data/transforms.py` — MONAI transforms (train/val)
-- [ ] `src/preprocess/pipeline.py` — end-to-end pipeline
+### Training loop
+- [ ] `src/training/trainer.py` -- основной training loop
+- [ ] Metrics: Dice score, IoU, sensitivity, specificity
+- [ ] Checkpointing (best model by val Dice)
+- [ ] MLflow logging
 
-### Smoke test
-- [ ] Загрузить 1 кейс из fold_0 train
-- [ ] Применить preprocessing
-- [ ] Проверить shapes, data types, ranges
-- [ ] Визуализация: до/после preprocessing
+### Запуск обучения
+- [ ] Обучение на fold_0 (200 train / 50 val)
+- [ ] Мониторинг loss и Dice на val
+- [ ] Оценка baseline Dice score
 
 ---
 
 ## Связанные файлы
 
-- План: раздел 5.2, Phase 1
+- Model: `src/models/unet3d.py`
+- Trainer: `src/training/trainer.py`
+- Config: `configs/experiment/baseline.yaml`
 - Dataset: `src/data/isles22_dataset.py`
-- Preprocessing: `src/preprocess/`
 - Transforms: `src/data/transforms.py`
-- Splits: `data/splits/fold_0.json`
-
----
-
-## Заметки
-
-**Технические требования:**
-- Target spacing: 1x1x1 mm или 2x2x2 mm (определить)
-- Orientation: RAS
-- Normalization: z-score per modality
-- Registration: rigid, moving=ADC/FLAIR, fixed=DWI
 
 ---
 
 ## Завершённые задачи
 
-### TASK-002: Данные + EDA ✅ ЗАВЕРШЕНО
+### TASK-003: Preprocessing Pipeline DONE
+**Завершено:** 2026-02-21
+- Dataset class реализован (isles22_dataset.py)
+- Intensity normalization (z-score, percentile)
+- MONAI transforms (ResampleToReference, NormalizePerModality, StackModalities)
+- Registration (SimpleITK rigid + scipy resample)
+- End-to-end pipeline (per-subject + batch)
+- Smoke test PASSED
+
+### TASK-002: Данные + EDA DONE
 **Завершено:** 2026-02-19
 - Датасет загружен (250 кейсов)
 - EDA + метаданные собраны
 - **5-fold CV splits созданы** (200 train / 50 val, стратификация)
 
-### TASK-001: Scaffolding ✅ ЗАВЕРШЕНО
+### TASK-001: Scaffolding DONE
 **Завершено:** 2026-02-19
 - 86 файлов, структура готова
 
@@ -80,9 +77,9 @@
 ## Следующая задача
 
 После завершения:
-- **TASK-004:** Baseline 3D U-Net training (Phase 2)
+- **TASK-005:** Evaluation framework (Phase 2)
 
 ---
 
-**Создано:** 2026-02-19
-**Последнее обновление:** 2026-02-19
+**Создано:** 2026-02-21
+**Последнее обновление:** 2026-02-21
