@@ -18,8 +18,8 @@ Status: IN PROGRESS
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
 | Gate A - Feasibility | ✅ COMPLETE | 100% | Данные + EDA + splits готовы |
-| Gate B - Baseline Training | 🟡 IN PROGRESS | 70% | Model + training pipeline done, smoke test passed |
-| Gate C - Evaluation | ⬜ NOT STARTED | 0% | |
+| Gate B - Baseline Training | 🟡 IN PROGRESS | 85% | Pipeline done, GPU training on Kaggle |
+| Gate C - Evaluation | 🟡 IN PROGRESS | 80% | Metrics + stratified eval + error analysis done |
 | Gate D - Structured Findings | ⬜ NOT STARTED | 0% | Schema готова (Pydantic) |
 | Gate E - Report Generation | ⬜ NOT STARTED | 0% | |
 | Gate F - Demo & Docs | ⬜ NOT STARTED | 5% | Gradio skeleton, README, Dockerfile |
@@ -33,17 +33,18 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [x] TASK-004: Baseline 3D U-Net training (Phase 2) -- DONE (pipeline ready, needs GPU training)
+- [x] TASK-005: Evaluation framework -- DONE
+- [ ] GPU training running on Kaggle (fold_0, 100 epochs)
 
 ### Следующие задачи
-1. Full training run on GPU (fold_0, 100 epochs)
-2. TASK-005: Evaluation framework
+1. Wait for Kaggle training, run evaluate.py on best checkpoint
+2. TASK-006: Structured findings + report generation
 
 ---
 
 ## Выполнено (история)
 
-### Session 4 (2026-02-23) -- Claude Code, TASK-004
+### Session 4 (2026-02-23) -- Claude Code, TASK-004 + TASK-005
 
 **TASK-004: Baseline 3D U-Net Training Pipeline DONE**
 - Model: MONAI 3D U-Net (4.7M params), configurable features/dropout
@@ -55,6 +56,14 @@ Status: IN PROGRESS
 - DivisiblePadd(k=16) added to transforms (fixes UNet dim mismatch on odd sizes)
 - Smoke test: 1 epoch on CPU passed (val_dice=0.027, checkpoint saved)
 - Next: full GPU training run for real baseline Dice score
+
+**TASK-005: Evaluation Framework DONE**
+- Metrics: Dice, IoU, sensitivity, specificity, HD95, volume MAE, lesion-wise F1
+- Stratified evaluation by lesion size (tiny/small/medium/large)
+- Error analysis: FP/FN categorization, missed/spurious lesions
+- Evaluation CLI script (scripts/evaluate.py)
+- Kaggle training notebook created and launched
+- Unit tests passed on synthetic data
 
 ### Session 3 (2026-02-21) -- Claude Code, TASK-003
 
