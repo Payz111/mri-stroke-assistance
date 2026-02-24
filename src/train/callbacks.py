@@ -1,28 +1,19 @@
-"""Training callbacks for checkpointing and early stopping.
+"""Training callbacks for checkpointing and early stopping."""
 
-Provides pluggable callback classes that the :class:`Trainer` invokes at
-the end of each validation epoch.
-"""
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
+import torch
 import torch.nn as nn
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointCallback:
-    """Save model weights when the monitored metric improves.
-
-    Parameters
-    ----------
-    save_dir:
-        Directory where checkpoint files are written.
-    monitor:
-        Name of the metric to track (e.g. ``"val_dice"``).
-    mode:
-        ``"min"`` or ``"max"`` — whether lower or higher is better.
-    """
+    """Save model weights when the monitored metric improves."""
 
     def __init__(
         self,
@@ -30,7 +21,12 @@ class CheckpointCallback:
         monitor: str = "val_dice",
         mode: str = "max",
     ) -> None:
-        raise NotImplementedError()
+        self.save_dir = Path(save_dir)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.monitor = monitor
+        self.mode = mode
+        self.best_value = float("-inf") if mode == "max" else float("inf")
+        self.best_epoch = -1
 
     def __call__(
         self,
@@ -38,34 +34,28 @@ class CheckpointCallback:
         metrics: dict[str, float],
         model: nn.Module,
     ) -> None:
-        """Evaluate whether to save a checkpoint.
+        value = metrics.get(self.monitor)
+        if value is None:
+            return
 
-        Parameters
-        ----------
-        epoch:
-            Current epoch number.
-        metrics:
-            Validation metrics dictionary.
-        model:
-            The model whose state_dict should be saved.
-        """
-        raise NotImplementedError()
+        improved = (
+            (value > self.best_value) if self.mode == "max"
+            else (value < self.best_value)
+        )
+
+        if improved:
+            self.best_value = value
+            self.best_epoch = epoch
+            path = self.save_dir / "best_model.pth"
+            torch.save(model.state_dict(), path)
+            logger.info(
+                "Checkpoint saved: epoch=%d, %s=%.4f -> %s",
+                epoch, self.monitor, value, path,
+            )
 
 
 class EarlyStoppingCallback:
-    """Stop training when the monitored metric stops improving.
-
-    Parameters
-    ----------
-    patience:
-        Number of epochs to wait after last improvement.
-    monitor:
-        Name of the metric to track.
-    mode:
-        ``"min"`` or ``"max"``.
-    min_delta:
-        Minimum change to qualify as an improvement.
-    """
+    """Stop training when the monitored metric stops improving."""
 
     def __init__(
         self,
@@ -74,21 +64,34 @@ class EarlyStoppingCallback:
         mode: str = "max",
         min_delta: float = 0.0,
     ) -> None:
-        raise NotImplementedError()
+        self.patience = patience
+        self.monitor = monitor
+        self.mode = mode
+        self.min_delta = min_delta
+        self.best_value = float("-inf") if mode == "max" else float("inf")
+        self.counter = 0
 
     def __call__(self, epoch: int, metrics: dict[str, float]) -> bool:
-        """Check whether training should be stopped.
+        value = metrics.get(self.monitor)
+        if value is None:
+            return False
 
-        Parameters
-        ----------
-        epoch:
-            Current epoch number.
-        metrics:
-            Validation metrics dictionary.
+        if self.mode == "max":
+            improved = value > self.best_value + self.min_delta
+        else:
+            improved = value < self.best_value - self.min_delta
 
-        Returns
-        -------
-        bool
-            ``True`` if training should stop, ``False`` otherwise.
-        """
-        raise NotImplementedError()
+        if improved:
+            self.best_value = value
+            self.counter = 0
+        else:
+            self.counter += 1
+
+        if self.counter >= self.patience:
+            logger.info(
+                "Early stopping at epoch %d: no improvement for %d epochs",
+                epoch, self.patience,
+            )
+            return True
+
+        return False

@@ -7,79 +7,76 @@
 
 ## Задача
 
-**ID:** TASK-004
-**Название:** Baseline 3D U-Net training
-**Фаза:** Phase 2 - Model Training
+**ID:** TASK-004 (pipeline done) / TASK-005 (next)
+**Название:** Full training run + Evaluation framework
+**Фаза:** Phase 2 - Model Training & Evaluation
 **Приоритет:** High
-**Статус:** Not Started
+**Статус:** Training pipeline DONE, needs GPU run
 
 ---
 
 ## Описание
 
-Обучить baseline 3D U-Net модель сегментации инфарктного очага.
+Pipeline обучения полностью готов. Нужен полный прогон на GPU и evaluation framework.
 
 ---
 
 ## Чек-лист выполнения
 
-### Модель
-- [ ] Реализовать `src/models/unet3d.py` (MONAI 3D U-Net)
-- [ ] Конфигурация модели через Hydra config
-- [ ] Loss function: Dice + BCE
+### TASK-004: Training Pipeline [DONE]
+- [x] MONAI 3D U-Net model (4.7M params)
+- [x] Loss functions: DiceLoss, FocalLoss, DiceFocalLoss
+- [x] Model factory (create_model, create_loss)
+- [x] Trainer with train/val loop, Dice metric, callbacks
+- [x] Callbacks: CheckpointCallback, EarlyStoppingCallback
+- [x] Training script with CLI args + YAML config
+- [x] DivisiblePadd(k=16) in transforms
+- [x] Smoke test: 1 epoch on CPU passed
 
-### Training loop
-- [ ] `src/training/trainer.py` -- основной training loop
-- [ ] Metrics: Dice score, IoU, sensitivity, specificity
-- [ ] Checkpointing (best model by val Dice)
-- [ ] MLflow logging
+### Full training run
+- [ ] GPU training on fold_0 (100 epochs)
+- [ ] Evaluate baseline Dice score
+- [ ] MLflow logging (optional enhancement)
 
-### Запуск обучения
-- [ ] Обучение на fold_0 (200 train / 50 val)
-- [ ] Мониторинг loss и Dice на val
-- [ ] Оценка baseline Dice score
+### TASK-005: Evaluation Framework
+- [ ] Per-subject Dice, IoU, sensitivity, specificity
+- [ ] Stratified evaluation by lesion size
+- [ ] Evaluation script
+- [ ] Results visualization
 
 ---
 
 ## Связанные файлы
 
 - Model: `src/models/unet3d.py`
-- Trainer: `src/training/trainer.py`
-- Config: `configs/experiment/baseline.yaml`
-- Dataset: `src/data/isles22_dataset.py`
+- Losses: `src/models/losses.py`
+- Factory: `src/models/factory.py`
+- Trainer: `src/train/trainer.py`
+- Callbacks: `src/train/callbacks.py`
+- Train script: `scripts/train.py`
+- Config: `configs/default.yaml`, `configs/experiment/baseline.yaml`
 - Transforms: `src/data/transforms.py`
+- Checkpoint: `outputs/fold_0/checkpoints/best_model.pth`
 
 ---
 
 ## Завершённые задачи
 
+### TASK-004: Training Pipeline DONE
+**Завершено:** 2026-02-23
+- MONAI 3D U-Net, DiceFocalLoss, Trainer, callbacks, CLI script
+- Smoke test: 1 epoch CPU, val_dice=0.027, checkpoint saved
+
 ### TASK-003: Preprocessing Pipeline DONE
 **Завершено:** 2026-02-21
-- Dataset class реализован (isles22_dataset.py)
-- Intensity normalization (z-score, percentile)
-- MONAI transforms (ResampleToReference, NormalizePerModality, StackModalities)
-- Registration (SimpleITK rigid + scipy resample)
-- End-to-end pipeline (per-subject + batch)
-- Smoke test PASSED
 
 ### TASK-002: Данные + EDA DONE
 **Завершено:** 2026-02-19
-- Датасет загружен (250 кейсов)
-- EDA + метаданные собраны
-- **5-fold CV splits созданы** (200 train / 50 val, стратификация)
 
 ### TASK-001: Scaffolding DONE
 **Завершено:** 2026-02-19
-- 86 файлов, структура готова
-
----
-
-## Следующая задача
-
-После завершения:
-- **TASK-005:** Evaluation framework (Phase 2)
 
 ---
 
 **Создано:** 2026-02-21
-**Последнее обновление:** 2026-02-21
+**Последнее обновление:** 2026-02-23

@@ -1,18 +1,20 @@
 """3-D UNet architecture for volumetric brain-lesion segmentation.
 
-Implements an encoder-decoder UNet with skip connections operating on
-3-D tensors of shape ``(B, C, D, H, W)``.
+Uses MONAI's UNet implementation as the backbone -- battle-tested,
+well-optimised, and standard in medical imaging research.
 """
+
 from __future__ import annotations
 
 from typing import Sequence
 
 import torch
 import torch.nn as nn
+from monai.networks.nets import UNet
 
 
 class UNet3D(nn.Module):
-    """Standard 3-D UNet with configurable channel progression.
+    """MONAI-based 3-D UNet with configurable channel progression.
 
     Parameters
     ----------
@@ -21,8 +23,9 @@ class UNet3D(nn.Module):
     out_channels:
         Number of output channels / classes (e.g. 1 for binary mask).
     features:
-        Sequence of feature-map sizes for each encoder level, e.g.
-        ``(32, 64, 128, 256)``.
+        Sequence of feature-map sizes for each encoder level.
+    dropout:
+        Dropout probability applied after each conv block.
     """
 
     def __init__(
@@ -30,9 +33,21 @@ class UNet3D(nn.Module):
         in_channels: int = 3,
         out_channels: int = 1,
         features: Sequence[int] = (32, 64, 128, 256),
+        dropout: float = 0.1,
     ) -> None:
         super().__init__()
-        raise NotImplementedError()
+        features = tuple(features)
+        strides = tuple(2 for _ in range(len(features) - 1))
+
+        self.net = UNet(
+            spatial_dims=3,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            channels=features,
+            strides=strides,
+            dropout=dropout,
+            num_res_units=2,
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass.
@@ -47,4 +62,4 @@ class UNet3D(nn.Module):
         torch.Tensor
             Logits tensor of shape ``(B, out_channels, D, H, W)``.
         """
-        raise NotImplementedError()
+        return self.net(x)

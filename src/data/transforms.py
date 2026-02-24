@@ -72,6 +72,7 @@ def get_train_transforms(config: dict[str, Any] | None = None) -> T.Compose:
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
+        T.DivisiblePadd(keys=["image", "label"], k=16),
         T.ToTensord(keys=["image", "label"]),
     ])
 
@@ -82,5 +83,6 @@ def get_val_transforms(config: dict[str, Any] | None = None) -> T.Compose:
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
+        T.DivisiblePadd(keys=["image", "label"], k=16),
         T.ToTensord(keys=["image", "label"]),
     ])

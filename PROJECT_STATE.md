@@ -18,7 +18,7 @@ Status: IN PROGRESS
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
 | Gate A - Feasibility | ✅ COMPLETE | 100% | Данные + EDA + splits готовы |
-| Gate B - Baseline Training | 🟡 IN PROGRESS | 30% | Preprocessing pipeline done |
+| Gate B - Baseline Training | 🟡 IN PROGRESS | 70% | Model + training pipeline done, smoke test passed |
 | Gate C - Evaluation | ⬜ NOT STARTED | 0% | |
 | Gate D - Structured Findings | ⬜ NOT STARTED | 0% | Schema готова (Pydantic) |
 | Gate E - Report Generation | ⬜ NOT STARTED | 0% | |
@@ -33,14 +33,28 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [x] TASK-003: Реализовать preprocessing pipeline (Phase 1) -- DONE
+- [x] TASK-004: Baseline 3D U-Net training (Phase 2) -- DONE (pipeline ready, needs GPU training)
 
 ### Следующие задачи
-1. TASK-004: Baseline 3D U-Net training (Phase 2)
+1. Full training run on GPU (fold_0, 100 epochs)
+2. TASK-005: Evaluation framework
 
 ---
 
 ## Выполнено (история)
+
+### Session 4 (2026-02-23) -- Claude Code, TASK-004
+
+**TASK-004: Baseline 3D U-Net Training Pipeline DONE**
+- Model: MONAI 3D U-Net (4.7M params), configurable features/dropout
+- Loss: DiceFocalLoss (Dice + Focal combined), DiceLoss, FocalLoss
+- Factory: create_model() + create_loss() from config dicts
+- Callbacks: CheckpointCallback (best model), EarlyStoppingCallback
+- Trainer: full train/val loop with Dice metric, LR scheduler, logging
+- Training script: scripts/train.py (argparse CLI, YAML config loading)
+- DivisiblePadd(k=16) added to transforms (fixes UNet dim mismatch on odd sizes)
+- Smoke test: 1 epoch on CPU passed (val_dice=0.027, checkpoint saved)
+- Next: full GPU training run for real baseline Dice score
 
 ### Session 3 (2026-02-21) -- Claude Code, TASK-003
 
@@ -168,5 +182,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-02-21
-**Обновил:** Claude Code (Session 3)
+**Последнее обновление:** 2026-02-23
+**Обновил:** Claude Code (Session 4)
