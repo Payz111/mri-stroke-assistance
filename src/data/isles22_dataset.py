@@ -53,15 +53,18 @@ class ISLES22Dataset(Dataset):
         sub_path = self.data_root / subject_id / "ses-0001"
         deriv_path = self.derivatives_root / subject_id / "ses-0001"
 
+        def _find(base: Path, pattern_gz: str, pattern_nii: str) -> list[Path]:
+            """Find NIfTI files, filtering out directories."""
+            hits = [p for p in base.glob(pattern_gz) if p.is_file()]
+            if not hits:
+                hits = [p for p in base.glob(pattern_nii) if p.is_file()]
+            return hits
+
         # Search for .nii.gz first, fall back to .nii (also search subdirs)
-        dwi_files = (list(sub_path.glob("dwi/*dwi.nii.gz"))
-                     or list(sub_path.glob("dwi/**/*dwi.nii")))
-        adc_files = (list(sub_path.glob("dwi/*adc.nii.gz"))
-                     or list(sub_path.glob("dwi/**/*adc.nii")))
-        flair_files = (list(sub_path.glob("anat/*FLAIR.nii.gz"))
-                       or list(sub_path.glob("anat/*FLAIR.nii")))
-        mask_files = (list(deriv_path.glob("*msk.nii.gz"))
-                      or list(deriv_path.glob("*msk.nii")))
+        dwi_files = _find(sub_path, "dwi/*dwi.nii.gz", "dwi/**/*dwi.nii")
+        adc_files = _find(sub_path, "dwi/*adc.nii.gz", "dwi/**/*adc.nii")
+        flair_files = _find(sub_path, "anat/*FLAIR.nii.gz", "anat/**/*FLAIR.nii")
+        mask_files = _find(deriv_path, "*msk.nii.gz", "*msk.nii")
 
         if not (dwi_files and adc_files and flair_files and mask_files):
             missing = []
