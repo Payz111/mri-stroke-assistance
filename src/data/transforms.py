@@ -66,23 +66,38 @@ class StackModalities(T.Transform):
         return d
 
 
+# Fixed spatial size so all subjects can be batched together.
+# Chosen to cover most subjects (median ~112x112x73) with minimal padding.
+SPATIAL_SIZE = (128, 128, 80)
+
+
 def get_train_transforms(config: dict[str, Any] | None = None) -> T.Compose:
     """Build the augmentation + preprocessing pipeline for training."""
+    spatial_size = SPATIAL_SIZE
+    if config and "spatial_size" in config:
+        spatial_size = tuple(config["spatial_size"])
+
     return T.Compose([
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
-        T.DivisiblePadd(keys=["image", "label"], k=16),
+        T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
+        T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
         T.ToTensord(keys=["image", "label"]),
     ])
 
 
 def get_val_transforms(config: dict[str, Any] | None = None) -> T.Compose:
     """Build the preprocessing pipeline for validation / inference."""
+    spatial_size = SPATIAL_SIZE
+    if config and "spatial_size" in config:
+        spatial_size = tuple(config["spatial_size"])
+
     return T.Compose([
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
-        T.DivisiblePadd(keys=["image", "label"], k=16),
+        T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
+        T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
         T.ToTensord(keys=["image", "label"]),
     ])
