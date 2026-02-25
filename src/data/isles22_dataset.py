@@ -45,14 +45,23 @@ class ISLES22Dataset(Dataset):
         return len(self.subject_ids)
 
     def _get_paths(self, subject_id: str) -> dict[str, Path]:
-        """Resolve file paths for a subject."""
+        """Resolve file paths for a subject.
+
+        Supports both compressed (.nii.gz) and uncompressed (.nii) NIfTI files,
+        and both flat and nested directory layouts (e.g. Kaggle vs local).
+        """
         sub_path = self.data_root / subject_id / "ses-0001"
         deriv_path = self.derivatives_root / subject_id / "ses-0001"
 
-        dwi_files = list(sub_path.glob("dwi/*dwi.nii.gz"))
-        adc_files = list(sub_path.glob("dwi/*adc.nii.gz"))
-        flair_files = list(sub_path.glob("anat/*FLAIR.nii.gz"))
-        mask_files = list(deriv_path.glob("*msk.nii.gz"))
+        # Search for .nii.gz first, fall back to .nii (also search subdirs)
+        dwi_files = (list(sub_path.glob("dwi/*dwi.nii.gz"))
+                     or list(sub_path.glob("dwi/**/*dwi.nii")))
+        adc_files = (list(sub_path.glob("dwi/*adc.nii.gz"))
+                     or list(sub_path.glob("dwi/**/*adc.nii")))
+        flair_files = (list(sub_path.glob("anat/*FLAIR.nii.gz"))
+                       or list(sub_path.glob("anat/*FLAIR.nii")))
+        mask_files = (list(deriv_path.glob("*msk.nii.gz"))
+                      or list(deriv_path.glob("*msk.nii")))
 
         if not (dwi_files and adc_files and flair_files and mask_files):
             missing = []
