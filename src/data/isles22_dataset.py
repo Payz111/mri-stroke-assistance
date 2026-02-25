@@ -12,14 +12,43 @@ import torch
 from torch.utils.data import Dataset
 
 
+def _find_nifti(base: Path, suffix: str) -> Path | None:
+    """Find a NIfTI file matching *suffix* under *base*, recursively.
+
+    Handles both local (.nii.gz flat) and Kaggle (.nii inside subdirs)
+    layouts. Returns the first real file (non-empty, non-directory) found.
+
+    Search order:
+        1. base/*{suffix}.nii.gz        (local BIDS compressed)
+        2. base/**/*{suffix}.nii.gz      (nested compressed)
+        3. base/**/*{suffix}.nii         (nested uncompressed / Kaggle)
+    """
+    # 1. Flat .nii.gz
+    for p in base.glob(f"*{suffix}.nii.gz"):
+        if p.is_file() and p.stat().st_size > 0:
+            return p
+
+    # 2. Nested .nii.gz
+    for p in base.rglob(f"*{suffix}.nii.gz"):
+        if p.is_file() and p.stat().st_size > 0:
+            return p
+
+    # 3. Any .nii (recursive) -- filter real files with size > 0
+    for p in base.rglob(f"*{suffix}.nii"):
+        if p.is_file() and p.stat().st_size > 0:
+            return p
+
+    return None
+
+
 class ISLES22Dataset(Dataset):
     """Dataset class that serves ISLES'22 subjects.
 
     Each item is a dictionary with the keys:
-        - ``dwi``      : DWI volume (C, D, H, W) float32
-        - ``adc``      : ADC volume (C, D, H, W) float32
-        - ``flair``    : FLAIR volume (C, D, H, W) float32
-        - ``mask``     : Ground-truth lesion mask (C, D, H, W) float32
+        - ``dwi``      : DWI volume (D, H, W) float32
+        - ``adc``      : ADC volume (D, H, W) float32
+        - ``flair``    : FLAIR volume (D, H, W) float32
+        - ``mask``     : Ground-truth lesion mask (D, H, W) float32
         - ``metadata`` : dict with subject_id, spacing, affine, shape
     """
 
@@ -47,45 +76,28 @@ class ISLES22Dataset(Dataset):
     def _get_paths(self, subject_id: str) -> dict[str, Path]:
         """Resolve file paths for a subject.
 
-        Supports both compressed (.nii.gz) and uncompressed (.nii) NIfTI files,
-        and both flat and nested directory layouts (e.g. Kaggle vs local).
+        Handles both local BIDS (.nii.gz) and Kaggle (.nii in subdirs).
         """
         sub_path = self.data_root / subject_id / "ses-0001"
         deriv_path = self.derivatives_root / subject_id / "ses-0001"
 
-        def _find(base: Path, pattern_gz: str, pattern_nii: str) -> list[Path]:
-            """Find NIfTI files, filtering out directories."""
-            hits = [p for p in base.glob(pattern_gz) if p.is_file()]
-            if not hits:
-                hits = [p for p in base.glob(pattern_nii) if p.is_file()]
-            return hits
+        dwi = _find_nifti(sub_path / "dwi", "_dwi")
+        adc = _find_nifti(sub_path / "dwi", "_adc")
+        flair = _find_nifti(sub_path / "anat", "_FLAIR")
+        mask = _find_nifti(deriv_path, "_msk")
 
-        # Search for .nii.gz first, fall back to .nii (also search subdirs)
-        dwi_files = _find(sub_path, "dwi/*dwi.nii.gz", "dwi/**/*dwi.nii")
-        adc_files = _find(sub_path, "dwi/*adc.nii.gz", "dwi/**/*adc.nii")
-        flair_files = _find(sub_path, "anat/*FLAIR.nii.gz", "anat/**/*FLAIR.nii")
-        mask_files = _find(deriv_path, "*msk.nii.gz", "*msk.nii")
+        missing = []
+        if dwi is None: missing.append("DWI")
+        if adc is None: missing.append("ADC")
+        if flair is None: missing.append("FLAIR")
+        if mask is None: missing.append("mask")
 
-        if not (dwi_files and adc_files and flair_files and mask_files):
-            missing = []
-            if not dwi_files:
-                missing.append("DWI")
-            if not adc_files:
-                missing.append("ADC")
-            if not flair_files:
-                missing.append("FLAIR")
-            if not mask_files:
-                missing.append("mask")
+        if missing:
             raise FileNotFoundError(
                 f"Missing files for {subject_id}: {missing}"
             )
 
-        return {
-            "dwi": dwi_files[0],
-            "adc": adc_files[0],
-            "flair": flair_files[0],
-            "mask": mask_files[0],
-        }
+        return {"dwi": dwi, "adc": adc, "flair": flair, "mask": mask}
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         subject_id = self.subject_ids[index]
