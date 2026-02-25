@@ -12,31 +12,46 @@ import torch
 from torch.utils.data import Dataset
 
 
+def _is_nifti(p: Path) -> bool:
+    """Check that path is a real non-empty NIfTI file."""
+    return p.is_file() and p.stat().st_size > 0
+
+
+# Mapping from modality key to list of filename patterns (case-insensitive)
+# Covers BIDS naming AND alternative naming found in ISLES'22 Kaggle dataset
+_MODALITY_PATTERNS: dict[str, list[str]] = {
+    "_dwi":   ["*_dwi", "*dwi_skull_stripped", "*_dwi_skull*"],
+    "_adc":   ["*_adc", "*adc_skull_stripped", "*_adc_skull*"],
+    "_FLAIR": ["*_FLAIR", "*_flair", "*FLAIR*"],
+    "_msk":   ["*_msk", "*_mask", "*_lesion*"],
+}
+
+
 def _find_nifti(base: Path, suffix: str) -> Path | None:
     """Find a NIfTI file matching *suffix* under *base*, recursively.
 
-    Handles both local (.nii.gz flat) and Kaggle (.nii inside subdirs)
-    layouts. Returns the first real file (non-empty, non-directory) found.
-
-    Search order:
-        1. base/*{suffix}.nii.gz        (local BIDS compressed)
-        2. base/**/*{suffix}.nii.gz      (nested compressed)
-        3. base/**/*{suffix}.nii         (nested uncompressed / Kaggle)
+    Handles:
+        - local BIDS (.nii.gz flat)
+        - Kaggle (.nii inside subdirs with varying filenames)
+        - Alternative naming conventions (e.g. dwi_skull_stripped)
     """
-    # 1. Flat .nii.gz
-    for p in base.glob(f"*{suffix}.nii.gz"):
-        if p.is_file() and p.stat().st_size > 0:
-            return p
+    patterns = _MODALITY_PATTERNS.get(suffix, [f"*{suffix}"])
 
-    # 2. Nested .nii.gz
-    for p in base.rglob(f"*{suffix}.nii.gz"):
-        if p.is_file() and p.stat().st_size > 0:
-            return p
+    for pat in patterns:
+        # 1. Flat .nii.gz
+        for p in base.glob(f"{pat}.nii.gz"):
+            if _is_nifti(p):
+                return p
 
-    # 3. Any .nii (recursive) -- filter real files with size > 0
-    for p in base.rglob(f"*{suffix}.nii"):
-        if p.is_file() and p.stat().st_size > 0:
-            return p
+        # 2. Recursive .nii.gz
+        for p in base.rglob(f"{pat}.nii.gz"):
+            if _is_nifti(p):
+                return p
+
+        # 3. Recursive .nii (Kaggle uncompressed)
+        for p in base.rglob(f"{pat}.nii"):
+            if _is_nifti(p):
+                return p
 
     return None
 
