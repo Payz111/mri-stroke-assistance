@@ -12,46 +12,28 @@ import torch
 from torch.utils.data import Dataset
 
 
-def _is_nifti(p: Path) -> bool:
-    """Check that path is a real non-empty NIfTI file."""
-    return p.is_file() and p.stat().st_size > 0
+def _find_nifti(base: Path, keyword: str) -> Path | None:
+    """Find a NIfTI file containing *keyword* in its name under *base*.
 
+    Searches recursively, returns the first real non-empty file.
+    Works with any naming convention (BIDS, Kaggle, skull-stripped, etc.)
 
-# Mapping from modality key to list of filename patterns (case-insensitive)
-# Covers BIDS naming AND alternative naming found in ISLES'22 Kaggle dataset
-_MODALITY_PATTERNS: dict[str, list[str]] = {
-    "_dwi":   ["*_dwi", "*dwi_skull_stripped", "*_dwi_skull*"],
-    "_adc":   ["*_adc", "*adc_skull_stripped", "*_adc_skull*"],
-    "_FLAIR": ["*_FLAIR", "*_flair", "*FLAIR*"],
-    "_msk":   ["*_msk", "*_mask", "*_lesion*"],
-}
-
-
-def _find_nifti(base: Path, suffix: str) -> Path | None:
-    """Find a NIfTI file matching *suffix* under *base*, recursively.
-
-    Handles:
-        - local BIDS (.nii.gz flat)
-        - Kaggle (.nii inside subdirs with varying filenames)
-        - Alternative naming conventions (e.g. dwi_skull_stripped)
+    Examples of matched files for keyword="dwi":
+        - sub-strokecase0001_ses-0001_dwi.nii.gz   (local BIDS)
+        - dwi_skull_stripped.nii                     (Kaggle, inside subdir)
+        - sub-Stroke43_iso_dwi_skull_stripped.nii    (Kaggle, alt naming)
     """
-    patterns = _MODALITY_PATTERNS.get(suffix, [f"*{suffix}"])
+    kw = keyword.lower()
 
-    for pat in patterns:
-        # 1. Flat .nii.gz
-        for p in base.glob(f"{pat}.nii.gz"):
-            if _is_nifti(p):
-                return p
+    # 1. Try .nii.gz first (local / compressed)
+    for p in base.rglob("*.nii.gz"):
+        if kw in p.name.lower() and p.is_file() and p.stat().st_size > 0:
+            return p
 
-        # 2. Recursive .nii.gz
-        for p in base.rglob(f"{pat}.nii.gz"):
-            if _is_nifti(p):
-                return p
-
-        # 3. Recursive .nii (Kaggle uncompressed)
-        for p in base.rglob(f"{pat}.nii"):
-            if _is_nifti(p):
-                return p
+    # 2. Fall back to .nii (Kaggle / uncompressed)
+    for p in base.rglob("*.nii"):
+        if kw in p.name.lower() and p.is_file() and p.stat().st_size > 0:
+            return p
 
     return None
 
@@ -96,10 +78,10 @@ class ISLES22Dataset(Dataset):
         sub_path = self.data_root / subject_id / "ses-0001"
         deriv_path = self.derivatives_root / subject_id / "ses-0001"
 
-        dwi = _find_nifti(sub_path / "dwi", "_dwi")
-        adc = _find_nifti(sub_path / "dwi", "_adc")
-        flair = _find_nifti(sub_path / "anat", "_FLAIR")
-        mask = _find_nifti(deriv_path, "_msk")
+        dwi = _find_nifti(sub_path / "dwi", "dwi")
+        adc = _find_nifti(sub_path / "dwi", "adc")
+        flair = _find_nifti(sub_path / "anat", "flair")
+        mask = _find_nifti(deriv_path, "msk")
 
         missing = []
         if dwi is None: missing.append("DWI")
