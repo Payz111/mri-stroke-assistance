@@ -7,65 +7,78 @@
 
 ## Задача
 
-**ID:** TASK-004 (pipeline done) / TASK-005 (next)
-**Название:** Full training run + Evaluation framework
+**ID:** TASK-006
+**Название:** Structured Findings + Report Generation
 **Фаза:** Phase 2 - Model Training & Evaluation
 **Приоритет:** High
-**Статус:** Training pipeline DONE, needs GPU run
+**Статус:** DONE
 
 ---
 
 ## Описание
 
-Pipeline обучения полностью готов. Нужен полный прогон на GPU и evaluation framework.
+Полный pipeline: сегментационная маска -> структурированные findings (JSON) -> текстовый радиологический отчёт.
+Принцип: ZERO hallucinations -- каждое предложение отчёта детерминистически из JSON.
 
 ---
 
 ## Чек-лист выполнения
 
-### TASK-004: Training Pipeline [DONE]
-- [x] MONAI 3D U-Net model (4.7M params)
-- [x] Loss functions: DiceLoss, FocalLoss, DiceFocalLoss
-- [x] Model factory (create_model, create_loss)
-- [x] Trainer with train/val loop, Dice metric, callbacks
-- [x] Callbacks: CheckpointCallback, EarlyStoppingCallback
-- [x] Training script with CLI args + YAML config
-- [x] DivisiblePadd(k=16) in transforms
-- [x] Smoke test: 1 epoch on CPU passed
-
-### Full training run
-- [ ] GPU training on fold_0 (100 epochs)
-- [ ] Evaluate baseline Dice score
-- [ ] MLflow logging (optional enhancement)
-
-### TASK-005: Evaluation Framework
-- [ ] Per-subject Dice, IoU, sensitivity, specificity
-- [ ] Stratified evaluation by lesion size
-- [ ] Evaluation script
-- [ ] Results visualization
+### TASK-006: Structured Findings + Report Generation [DONE]
+- [x] volume_calc.py -- объём в mL + max diameter (bbox diagonal)
+- [x] laterality.py -- определение полушария (left/right/bilateral)
+- [x] location.py -- эвристическая анатомическая локализация (centroid-based)
+- [x] territory.py -- сосудистый бассейн (MCA/ACA/PCA/vertebrobasilar)
+- [x] mismatch.py -- DWI-FLAIR mismatch (acute vs subacute)
+- [x] builder.py -- сборка V1Findings JSON (все модули + ADC/FLAIR analysis)
+- [x] templates.py -- шаблоны отчёта (ZERO hallucinations)
+- [x] generator.py -- генератор текста из JSON
+- [x] validator.py -- валидация отчёта vs findings (5 проверок)
+- [x] Smoke test: синтетические данные -- PASSED
 
 ---
 
 ## Связанные файлы
 
-- Model: `src/models/unet3d.py`
-- Losses: `src/models/losses.py`
-- Factory: `src/models/factory.py`
-- Trainer: `src/train/trainer.py`
-- Callbacks: `src/train/callbacks.py`
-- Train script: `scripts/train.py`
-- Config: `configs/default.yaml`, `configs/experiment/baseline.yaml`
-- Transforms: `src/data/transforms.py`
-- Checkpoint: `outputs/fold_0/checkpoints/best_model.pth`
+### Findings extraction
+- Volume calc: `src/findings/volume_calc.py`
+- Laterality: `src/findings/laterality.py`
+- Location: `src/findings/location.py`
+- Territory: `src/findings/territory.py`
+- Mismatch: `src/findings/mismatch.py`
+- Builder: `src/findings/builder.py`
+- Schema: `src/findings/schema.py`
+
+### Report generation
+- Templates: `src/report/templates.py`
+- Generator: `src/report/generator.py`
+- Validator: `src/report/validator.py`
+
+### Testing
+- Smoke test: `scripts/smoke_test_findings.py`
+- Outputs: `outputs/smoke_test_findings/`
+
+---
+
+## Следующие задачи
+
+1. TASK-007: Run full evaluation with best_model.pth on val set
+2. Demo app update (Gradio с загрузкой NIfTI + отчёт)
+3. Documentation + portfolio polish
 
 ---
 
 ## Завершённые задачи
 
+### TASK-006: Structured Findings + Report DONE
+**Завершено:** 2026-02-27
+
+### TASK-005: Evaluation Framework DONE
+**Завершено:** 2026-02-23
+
 ### TASK-004: Training Pipeline DONE
 **Завершено:** 2026-02-23
-- MONAI 3D U-Net, DiceFocalLoss, Trainer, callbacks, CLI script
-- Smoke test: 1 epoch CPU, val_dice=0.027, checkpoint saved
+- Best val_dice: 0.606 (epoch 93, 100 epochs on Kaggle T4)
 
 ### TASK-003: Preprocessing Pipeline DONE
 **Завершено:** 2026-02-21
@@ -79,4 +92,4 @@ Pipeline обучения полностью готов. Нужен полный
 ---
 
 **Создано:** 2026-02-21
-**Последнее обновление:** 2026-02-23
+**Последнее обновление:** 2026-02-27
