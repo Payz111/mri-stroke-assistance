@@ -22,7 +22,7 @@ Status: IN PROGRESS
 | Gate C - Evaluation | ✅ COMPLETE | 100% | Metrics + stratified eval + error analysis |
 | Gate D - Structured Findings | ✅ COMPLETE | 100% | Builder + all extractors |
 | Gate E - Report Generation | ✅ COMPLETE | 100% | Template-based, validator, zero hallucinations |
-| Gate F - Demo & Docs | ⬜ NOT STARTED | 5% | Gradio skeleton, README, Dockerfile |
+| Gate F - Demo & Docs | 🟡 IN PROGRESS | 60% | Gradio demo done, README/docs pending |
 | Gate G - V2 Perfusion | ⬜ NOT STARTED | 0% | |
 | Gate H - Portfolio Ready | ⬜ NOT STARTED | 0% | |
 
