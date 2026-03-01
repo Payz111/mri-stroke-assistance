@@ -57,12 +57,19 @@ class NormalizePerModality(T.MapTransform):
 
 
 class StackModalities(T.Transform):
-    """Stack DWI, ADC, FLAIR into a single (3, D, H, W) tensor."""
+    """Stack DWI, ADC, FLAIR into a single (3, D, H, W) tensor.
+
+    Removes raw modality keys to avoid collation errors in DataLoader
+    (raw volumes have different shapes across subjects).
+    """
 
     def __call__(self, data: dict) -> dict:
         d = dict(data)
         d["image"] = np.stack([d["dwi"], d["adc"], d["flair"]], axis=0)
         d["label"] = d["mask"][np.newaxis]  # (1, D, H, W)
+        # Remove raw keys -- only image/label needed downstream
+        for key in ("dwi", "adc", "flair", "mask"):
+            del d[key]
         return d
 
 
@@ -71,18 +78,52 @@ class StackModalities(T.Transform):
 SPATIAL_SIZE = (128, 128, 80)
 
 
-def get_train_transforms(config: dict[str, Any] | None = None) -> T.Compose:
-    """Build the augmentation + preprocessing pipeline for training."""
+def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
+    """Build the augmentation + preprocessing pipeline for training.
+
+    Parameters
+    ----------
+    aug_config:
+        Augmentation config dict (from cfg["augmentation"]).
+        If None, uses sensible defaults matching configs/default.yaml.
+    """
     spatial_size = SPATIAL_SIZE
-    if config and "spatial_size" in config:
-        spatial_size = tuple(config["spatial_size"])
+
+    # Parse augmentation parameters with defaults
+    if aug_config is None:
+        aug_config = {}
+    spatial_cfg = aug_config.get("spatial", {})
+    intensity_cfg = aug_config.get("intensity", {})
+
+    rotate_range = spatial_cfg.get("rotate_range", [-0.26, 0.26])
+    scale_range = spatial_cfg.get("scale_range", [0.9, 1.1])
+    flip_axes = spatial_cfg.get("flip_axes", [0])
+    noise_std = intensity_cfg.get("noise_std", 0.1)
+    gamma_range = intensity_cfg.get("gamma_range", [0.7, 1.5])
 
     return T.Compose([
+        # 1. Resample + normalize + stack (same as val)
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
+        # 2. Pad + crop to fixed size FIRST (ensures uniform shape)
         T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
         T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
+        # 3. Spatial augmentation (image + label together, preserves size)
+        T.RandFlipd(keys=["image", "label"], spatial_axis=flip_axes[0], prob=0.5),
+        T.RandAffined(
+            keys=["image", "label"],
+            spatial_size=spatial_size,
+            rotate_range=[rotate_range[1]] * 3,
+            scale_range=[scale_range[1] - 1.0] * 3,
+            mode=["bilinear", "nearest"],
+            padding_mode="zeros",
+            prob=0.7,
+        ),
+        # 4. Intensity augmentation (image only)
+        T.RandGaussianNoised(keys=["image"], std=noise_std, prob=0.5),
+        T.RandAdjustContrastd(keys=["image"], gamma=tuple(gamma_range), prob=0.5),
+        # 5. Convert
         T.ToTensord(keys=["image", "label"]),
     ])
 

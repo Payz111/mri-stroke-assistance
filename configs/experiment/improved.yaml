@@ -1,0 +1,33 @@
+# Improved experiment: augmentation + larger batch + more regularization
+# Usage: python scripts/train.py --config configs/experiment/improved.yaml
+#
+# Changes vs baseline (dice=0.606):
+#   1. Data augmentation actually applied (was configured but not used)
+#   2. Batch size 2 -> 4 (better gradient estimates, fits T4 16GB)
+#   3. Dropout 0.1 -> 0.2 (more regularization)
+#   4. Epochs 100 -> 150 (longer training with early stopping)
+#   5. Stronger augmentation parameters
+
+model:
+  name: "unet3d"
+  in_channels: 3
+  out_channels: 1
+  features: [32, 64, 128, 256]
+  dropout: 0.2
+
+training:
+  epochs: 150
+  batch_size: 4
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  optimizer: "adamw"
+  scheduler: "cosine"
+
+augmentation:
+  spatial:
+    rotate_range: [-0.35, 0.35]  # ~20 degrees
+    scale_range: [0.85, 1.15]
+    flip_axes: [0]
+  intensity:
+    gamma_range: [0.5, 2.0]
+    noise_std: 0.15

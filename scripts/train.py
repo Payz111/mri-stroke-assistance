@@ -102,7 +102,7 @@ def main() -> None:
         derivatives_root=derivatives_root,
         split_file=split_file,
         split="train",
-        transform=get_train_transforms(),
+        transform=get_train_transforms(cfg.get("augmentation")),
     )
     val_ds = ISLES22Dataset(
         data_root=data_root,
