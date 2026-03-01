@@ -1,33 +1,38 @@
-# Improved experiment: augmentation + larger batch + more regularization
+# Improved experiment v2: mild augmentation + longer training
 # Usage: python scripts/train.py --config configs/experiment/improved.yaml
+#
+# v1 (too aggressive): dice=0.405, early stopped at epoch 56
+# v2 (mild): softer augmentation, more patience, 200 epochs
 #
 # Changes vs baseline (dice=0.606):
 #   1. Data augmentation actually applied (was configured but not used)
 #   2. Batch size 2 -> 4 (better gradient estimates, fits T4 16GB)
-#   3. Dropout 0.1 -> 0.2 (more regularization)
-#   4. Epochs 100 -> 150 (longer training with early stopping)
-#   5. Stronger augmentation parameters
+#   3. Dropout 0.1 -> 0.15 (mild regularization, not 0.2)
+#   4. Epochs 100 -> 200 (longer training)
+#   5. Patience 15 -> 35 (augmentation slows convergence)
+#   6. Mild augmentation parameters (not aggressive)
 
 model:
   name: "unet3d"
   in_channels: 3
   out_channels: 1
   features: [32, 64, 128, 256]
-  dropout: 0.2
+  dropout: 0.15
 
 training:
-  epochs: 150
+  epochs: 200
   batch_size: 4
   learning_rate: 1.0e-4
   weight_decay: 1.0e-5
   optimizer: "adamw"
   scheduler: "cosine"
+  early_stopping_patience: 35
 
 augmentation:
   spatial:
-    rotate_range: [-0.35, 0.35]  # ~20 degrees
-    scale_range: [0.85, 1.15]
+    rotate_range: [-0.17, 0.17]  # ~10 degrees (was 20)
+    scale_range: [0.9, 1.1]      # +/-10% (was +/-15%)
     flip_axes: [0]
   intensity:
-    gamma_range: [0.5, 2.0]
-    noise_std: 0.15
+    gamma_range: [0.8, 1.3]      # mild (was 0.5-2.0)
+    noise_std: 0.05               # mild (was 0.15)
