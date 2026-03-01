@@ -12,6 +12,8 @@ import numpy as np
 import torch
 import yaml
 
+from scipy.ndimage import zoom
+
 from src.data.transforms import get_val_transforms
 from src.findings.builder import build_findings
 from src.models.factory import create_model
@@ -147,12 +149,24 @@ def run_inference(
     # Step 1: Model prediction
     pred_mask = predict_mask(model, dwi, adc, flair, device, threshold)
 
+    # Step 1.5: Resample modalities to DWI space for findings extraction
+    # (FLAIR often has different resolution, e.g. 352x352x230 vs DWI 112x112x72)
+    ref_shape = dwi.shape
+    adc_resampled = adc
+    flair_resampled = flair
+    if adc.shape != ref_shape:
+        factors = [r / s for r, s in zip(ref_shape, adc.shape)]
+        adc_resampled = zoom(adc, factors, order=1).astype(np.float32)
+    if flair.shape != ref_shape:
+        factors = [r / s for r, s in zip(ref_shape, flair.shape)]
+        flair_resampled = zoom(flair, factors, order=1).astype(np.float32)
+
     # Step 2: Build structured findings
     findings = build_findings(
         lesion_masks=[pred_mask],
         dwi=dwi,
-        adc=adc,
-        flair=flair,
+        adc=adc_resampled,
+        flair=flair_resampled,
         metadata=metadata,
     )
 
