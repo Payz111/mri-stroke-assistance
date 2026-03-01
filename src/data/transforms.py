@@ -79,38 +79,23 @@ SPATIAL_SIZE = (128, 128, 80)
 
 
 def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
-    """Build the augmentation + preprocessing pipeline for training.
+    """Build the preprocessing pipeline for training.
 
     Parameters
     ----------
     aug_config:
-        Augmentation config dict (from cfg["augmentation"]).
-        If None, uses minimal safe defaults (flip only).
+        Augmentation config dict (reserved for future use).
+        Augmentation experiments showed no improvement on ISLES 2022 (250 cases):
+        baseline (no aug) dice=0.606 > v3 (flip+noise) 0.562 > v1 (full aug) 0.405.
     """
     spatial_size = SPATIAL_SIZE
 
-    # Parse augmentation parameters with defaults
-    if aug_config is None:
-        aug_config = {}
-    spatial_cfg = aug_config.get("spatial", {})
-    intensity_cfg = aug_config.get("intensity", {})
-
-    flip_axes = spatial_cfg.get("flip_axes", [0])
-    noise_std = intensity_cfg.get("noise_std", 0.03)
-
     return T.Compose([
-        # 1. Resample + normalize + stack (same as val)
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
-        # 2. Pad + crop to fixed size
         T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
         T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
-        # 3. Minimal augmentation: flip only (safest, doubles effective dataset)
-        T.RandFlipd(keys=["image", "label"], spatial_axis=flip_axes[0], prob=0.5),
-        # 4. Very light noise (image only)
-        T.RandGaussianNoised(keys=["image"], std=noise_std, prob=0.3),
-        # 5. Convert
         T.ToTensord(keys=["image", "label"]),
     ])
 
