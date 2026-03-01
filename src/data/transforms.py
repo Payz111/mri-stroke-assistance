@@ -85,7 +85,7 @@ def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
     ----------
     aug_config:
         Augmentation config dict (from cfg["augmentation"]).
-        If None, uses sensible defaults matching configs/default.yaml.
+        If None, uses minimal safe defaults (flip only).
     """
     spatial_size = SPATIAL_SIZE
 
@@ -95,34 +95,21 @@ def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
     spatial_cfg = aug_config.get("spatial", {})
     intensity_cfg = aug_config.get("intensity", {})
 
-    rotate_range = spatial_cfg.get("rotate_range", [-0.26, 0.26])
-    scale_range = spatial_cfg.get("scale_range", [0.9, 1.1])
     flip_axes = spatial_cfg.get("flip_axes", [0])
-    noise_std = intensity_cfg.get("noise_std", 0.1)
-    gamma_range = intensity_cfg.get("gamma_range", [0.7, 1.5])
+    noise_std = intensity_cfg.get("noise_std", 0.03)
 
     return T.Compose([
         # 1. Resample + normalize + stack (same as val)
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
-        # 2. Pad + crop to fixed size FIRST (ensures uniform shape)
+        # 2. Pad + crop to fixed size
         T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
         T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
-        # 3. Spatial augmentation (image + label together, preserves size)
+        # 3. Minimal augmentation: flip only (safest, doubles effective dataset)
         T.RandFlipd(keys=["image", "label"], spatial_axis=flip_axes[0], prob=0.5),
-        T.RandAffined(
-            keys=["image", "label"],
-            spatial_size=spatial_size,
-            rotate_range=[rotate_range[1]] * 3,
-            scale_range=[scale_range[1] - 1.0] * 3,
-            mode=["bilinear", "nearest"],
-            padding_mode="zeros",
-            prob=0.7,
-        ),
-        # 4. Intensity augmentation (image only)
-        T.RandGaussianNoised(keys=["image"], std=noise_std, prob=0.5),
-        T.RandAdjustContrastd(keys=["image"], gamma=tuple(gamma_range), prob=0.5),
+        # 4. Very light noise (image only)
+        T.RandGaussianNoised(keys=["image"], std=noise_std, prob=0.3),
         # 5. Convert
         T.ToTensord(keys=["image", "label"]),
     ])
