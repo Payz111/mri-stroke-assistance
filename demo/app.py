@@ -2,10 +2,17 @@
 
 Full pipeline: NIfTI upload -> preprocessing -> model inference ->
 structured findings (JSON) -> radiology report + visualization.
+
+Supports two upload modes:
+1. Single ZIP/folder with all modalities (auto-detects DWI/ADC/FLAIR)
+2. Three separate NIfTI files
 """
 from __future__ import annotations
 
+import shutil
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 # Add project root to path
@@ -49,53 +56,146 @@ def _load_nifti(file_path: str) -> tuple:
     return data, img
 
 
-def predict(dwi_file, adc_file, flair_file):
-    """Run full inference pipeline on uploaded NIfTI files."""
-    if dwi_file is None or adc_file is None or flair_file is None:
-        return "Error: Please upload all 3 files (DWI, ADC, FLAIR).", None, None
+def _find_nifti_by_keyword(base: Path, keyword: str) -> Path | None:
+    """Find a NIfTI file containing keyword in its name.
 
-    try:
-        from src.inference.pipeline import run_inference
-        from src.inference.visualize import create_montage
+    Reuses the same logic as src/data/isles22_dataset._find_nifti.
+    """
+    kw = keyword.lower()
+    # Try .nii.gz first
+    for p in base.rglob("*.nii.gz"):
+        if kw in p.name.lower() and p.is_file() and p.stat().st_size > 0:
+            return p
+    # Fall back to .nii
+    for p in base.rglob("*.nii"):
+        if kw in p.name.lower() and p.is_file() and p.stat().st_size > 0:
+            return p
+    return None
 
-        dwi, dwi_img = _load_nifti(dwi_file)
-        adc, _ = _load_nifti(adc_file)
-        flair, _ = _load_nifti(flair_file)
 
-        metadata = {
-            "subject_id": Path(dwi_file).parent.name or "uploaded",
-            "spacing": tuple(float(s) for s in dwi_img.header.get_zooms()[:3]),
-            "affine": dwi_img.affine,
-            "shape": dwi.shape,
-        }
+def _extract_archive(archive_path: str) -> Path:
+    """Extract ZIP archive to a temp directory, return the path."""
+    tmp_dir = Path(tempfile.mkdtemp(prefix="mri_stroke_"))
+    with zipfile.ZipFile(archive_path, "r") as zf:
+        zf.extractall(tmp_dir)
+    return tmp_dir
 
-        model = _get_model()
-        result = run_inference(
-            model=model,
-            dwi=dwi,
-            adc=adc,
-            flair=flair,
-            metadata=metadata,
-            device=_device,
+
+def _find_modalities_in_dir(base_dir: Path) -> dict[str, Path]:
+    """Auto-detect DWI, ADC, FLAIR files in a directory."""
+    dwi = _find_nifti_by_keyword(base_dir, "dwi")
+    adc = _find_nifti_by_keyword(base_dir, "adc")
+    flair = _find_nifti_by_keyword(base_dir, "flair")
+
+    found = {}
+    missing = []
+    if dwi:
+        found["dwi"] = dwi
+    else:
+        missing.append("DWI")
+    if adc:
+        found["adc"] = adc
+    else:
+        missing.append("ADC")
+    if flair:
+        found["flair"] = flair
+    else:
+        missing.append("FLAIR")
+
+    if missing:
+        all_nifti = list(base_dir.rglob("*.nii*"))
+        names = [p.name for p in all_nifti[:10]]
+        raise FileNotFoundError(
+            f"Could not find: {', '.join(missing)}.\n"
+            f"Files in archive: {names}\n"
+            "Files must contain 'dwi', 'adc', or 'flair' in their names."
         )
+    return found
 
-        report = result["report"]
-        findings = result["findings"]
-        validation = result["validation"]
 
-        if not validation["valid"]:
-            issues = "; ".join(validation["issues"])
-            report += f"\n\n*** VALIDATION WARNING: {issues} ***"
+def _run_analysis(dwi_path, adc_path, flair_path):
+    """Core analysis: load files, run inference, return results."""
+    from src.inference.pipeline import run_inference
+    from src.inference.visualize import create_montage
 
-        preview = create_montage(dwi, result["pred_mask"], n_slices=6)
-        findings_clean = json.loads(json.dumps(findings, default=str))
+    dwi, dwi_img = _load_nifti(str(dwi_path))
+    adc, _ = _load_nifti(str(adc_path))
+    flair, _ = _load_nifti(str(flair_path))
 
-        return report, findings_clean, preview
+    subject_name = dwi_path.parent.name or "uploaded"
+    metadata = {
+        "subject_id": subject_name,
+        "spacing": tuple(float(s) for s in dwi_img.header.get_zooms()[:3]),
+        "affine": dwi_img.affine,
+        "shape": dwi.shape,
+    }
+
+    model = _get_model()
+    result = run_inference(
+        model=model,
+        dwi=dwi,
+        adc=adc,
+        flair=flair,
+        metadata=metadata,
+        device=_device,
+    )
+
+    report = result["report"]
+    findings = result["findings"]
+    validation = result["validation"]
+
+    if not validation["valid"]:
+        issues = "; ".join(validation["issues"])
+        report += f"\n\n*** VALIDATION WARNING: {issues} ***"
+
+    preview = create_montage(dwi, result["pred_mask"], n_slices=6)
+    findings_clean = json.loads(json.dumps(findings, default=str))
+
+    return report, findings_clean, preview
+
+
+def predict_archive(archive_file):
+    """Run analysis on a ZIP archive containing DWI/ADC/FLAIR."""
+    if archive_file is None:
+        return "Upload a ZIP archive with DWI, ADC, and FLAIR files.", None, None
+
+    tmp_dir = None
+    try:
+        tmp_dir = _extract_archive(archive_file)
+        paths = _find_modalities_in_dir(tmp_dir)
+
+        status = (
+            f"Found: DWI={paths['dwi'].name}, "
+            f"ADC={paths['adc'].name}, "
+            f"FLAIR={paths['flair'].name}\n"
+        )
+        report, findings, preview = _run_analysis(
+            paths["dwi"], paths["adc"], paths["flair"]
+        )
+        return status + report, findings, preview
 
     except FileNotFoundError as e:
         return f"Error: {e}", None, None
+    except zipfile.BadZipFile:
+        return "Error: File is not a valid ZIP archive.", None, None
     except Exception as e:
-        return f"Error during inference: {type(e).__name__}: {e}", None, None
+        return f"Error: {type(e).__name__}: {e}", None, None
+    finally:
+        if tmp_dir and tmp_dir.exists():
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def predict_separate(dwi_file, adc_file, flair_file):
+    """Run analysis on 3 separately uploaded NIfTI files."""
+    if dwi_file is None or adc_file is None or flair_file is None:
+        return "Upload all 3 files: DWI, ADC, FLAIR.", None, None
+
+    try:
+        return _run_analysis(Path(dwi_file), Path(adc_file), Path(flair_file))
+    except FileNotFoundError as e:
+        return f"Error: {e}", None, None
+    except Exception as e:
+        return f"Error: {type(e).__name__}: {e}", None, None
 
 
 def predict_synthetic():
@@ -144,62 +244,91 @@ def create_app():
             # MRI Stroke Assist
             AI-powered assistant for ischemic stroke detection on brain MRI.
 
-            **Upload DWI, ADC, and FLAIR NIfTI files** to get:
-            - Automated lesion segmentation
-            - Structured findings (JSON)
-            - Draft radiology report
-
-            > **Disclaimer:** This is a research tool for educational purposes only.
-            > All results require expert review. Not for clinical use.
+            > **Disclaimer:** Research tool only. All results require expert review.
             """
         )
 
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("### Input")
-                dwi_input = gr.File(
-                    label="DWI (.nii / .nii.gz)",
-                    file_types=[".nii", ".nii.gz", ".gz"],
+        with gr.Tabs():
+            # Tab 1: ZIP archive (simplest for user)
+            with gr.Tab("Upload ZIP archive"):
+                gr.Markdown(
+                    "Upload a **single ZIP file** containing DWI, ADC, and "
+                    "FLAIR NIfTI files. The app will find them automatically "
+                    "by filename (must contain 'dwi', 'adc', 'flair')."
                 )
-                adc_input = gr.File(
-                    label="ADC (.nii / .nii.gz)",
-                    file_types=[".nii", ".nii.gz", ".gz"],
-                )
-                flair_input = gr.File(
-                    label="FLAIR (.nii / .nii.gz)",
-                    file_types=[".nii", ".nii.gz", ".gz"],
-                )
-
                 with gr.Row():
-                    run_btn = gr.Button(
-                        "Run Analysis", variant="primary", size="lg"
-                    )
-                    demo_btn = gr.Button(
-                        "Synthetic Demo", variant="secondary", size="lg"
-                    )
+                    with gr.Column(scale=1):
+                        zip_input = gr.File(
+                            label="ZIP archive with MRI data",
+                            file_types=[".zip"],
+                        )
+                        with gr.Row():
+                            zip_btn = gr.Button(
+                                "Analyze", variant="primary", size="lg"
+                            )
+                            demo_btn = gr.Button(
+                                "Synthetic Demo", variant="secondary", size="lg"
+                            )
 
-            with gr.Column(scale=2):
-                gr.Markdown("### Results")
-                preview_output = gr.Image(label="Lesion Overlay", height=400)
-                report_output = gr.Textbox(
-                    label="Draft Radiology Report",
-                    lines=18,
+                    with gr.Column(scale=2):
+                        zip_preview = gr.Image(
+                            label="Lesion Overlay", height=400
+                        )
+                        zip_report = gr.Textbox(
+                            label="Draft Radiology Report", lines=18
+                        )
+
+                zip_json = gr.JSON(label="Structured Findings (JSON)")
+
+                zip_btn.click(
+                    fn=predict_archive,
+                    inputs=[zip_input],
+                    outputs=[zip_report, zip_json, zip_preview],
+                )
+                demo_btn.click(
+                    fn=predict_synthetic,
+                    inputs=[],
+                    outputs=[zip_report, zip_json, zip_preview],
                 )
 
-        with gr.Row():
-            json_output = gr.JSON(label="Structured Findings (JSON)")
+            # Tab 2: Separate files
+            with gr.Tab("Upload files separately"):
+                gr.Markdown(
+                    "Upload each modality as a separate NIfTI file."
+                )
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        dwi_input = gr.File(
+                            label="DWI (.nii / .nii.gz)",
+                            file_types=[".nii", ".nii.gz", ".gz"],
+                        )
+                        adc_input = gr.File(
+                            label="ADC (.nii / .nii.gz)",
+                            file_types=[".nii", ".nii.gz", ".gz"],
+                        )
+                        flair_input = gr.File(
+                            label="FLAIR (.nii / .nii.gz)",
+                            file_types=[".nii", ".nii.gz", ".gz"],
+                        )
+                        sep_btn = gr.Button(
+                            "Analyze", variant="primary", size="lg"
+                        )
 
-        run_btn.click(
-            fn=predict,
-            inputs=[dwi_input, adc_input, flair_input],
-            outputs=[report_output, json_output, preview_output],
-        )
+                    with gr.Column(scale=2):
+                        sep_preview = gr.Image(
+                            label="Lesion Overlay", height=400
+                        )
+                        sep_report = gr.Textbox(
+                            label="Draft Radiology Report", lines=18
+                        )
 
-        demo_btn.click(
-            fn=predict_synthetic,
-            inputs=[],
-            outputs=[report_output, json_output, preview_output],
-        )
+                sep_json = gr.JSON(label="Structured Findings (JSON)")
+
+                sep_btn.click(
+                    fn=predict_separate,
+                    inputs=[dwi_input, adc_input, flair_input],
+                    outputs=[sep_report, sep_json, sep_preview],
+                )
 
     return app
 
