@@ -133,7 +133,19 @@ class SOOPDataset(Dataset):
         return len(self.subject_ids)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        subject_id = self.subject_ids[index]
+        # Try loading this subject; on corrupt files, try next subject
+        for attempt in range(min(10, len(self.subject_ids))):
+            idx = (index + attempt) % len(self.subject_ids)
+            subject_id = self.subject_ids[idx]
+            try:
+                return self._load_subject(subject_id)
+            except (EOFError, OSError, ValueError) as e:
+                import logging
+                logging.warning("Skipping %s: %s", subject_id, e)
+                continue
+        raise RuntimeError(f"Could not load any subject starting from index {index}")
+
+    def _load_subject(self, subject_id: str) -> dict[str, Any]:
         paths = self._get_paths(subject_id)
 
         dwi_img = nib.load(paths["dwi"])
@@ -149,7 +161,6 @@ class SOOPDataset(Dataset):
             mask = self._to_3d(mask_img.get_fdata(dtype=np.float32))
             mask = (mask > 0).astype(np.float32)
         else:
-            # No mask -- create empty mask matching DWI shape
             mask = np.zeros_like(dwi, dtype=np.float32)
 
         metadata = {
