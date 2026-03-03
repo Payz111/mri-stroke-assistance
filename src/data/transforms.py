@@ -21,10 +21,27 @@ class ResampleToReference(T.Transform):
     """Resample all modalities to match the reference key's spatial shape.
 
     Uses trilinear interpolation for images and nearest-neighbor for masks.
+    After zoom, crops/pads to guarantee exact shape match (zoom can be off by
+    +-1 voxel due to floating-point rounding).
     """
 
     def __init__(self, reference_key: str = "dwi") -> None:
         self.reference_key = reference_key
+
+    @staticmethod
+    def _force_shape(vol: np.ndarray, target: tuple) -> np.ndarray:
+        """Crop or zero-pad *vol* so it exactly matches *target* shape."""
+        if vol.shape == target:
+            return vol
+        result = np.zeros(target, dtype=vol.dtype)
+        slices_src = []
+        slices_dst = []
+        for s, t in zip(vol.shape, target):
+            m = min(s, t)
+            slices_src.append(slice(0, m))
+            slices_dst.append(slice(0, m))
+        result[tuple(slices_dst)] = vol[tuple(slices_src)]
+        return result
 
     def __call__(self, data: dict) -> dict:
         d = dict(data)
@@ -34,11 +51,13 @@ class ResampleToReference(T.Transform):
             if d[key].shape != ref_shape:
                 factors = [r / s for r, s in zip(ref_shape, d[key].shape)]
                 d[key] = zoom(d[key], factors, order=1).astype(np.float32)
+                d[key] = self._force_shape(d[key], ref_shape)
 
         # Resample mask with nearest-neighbor
         if d[LABEL_KEY].shape != ref_shape:
             factors = [r / s for r, s in zip(ref_shape, d[LABEL_KEY].shape)]
             d[LABEL_KEY] = zoom(d[LABEL_KEY], factors, order=0).astype(np.float32)
+            d[LABEL_KEY] = self._force_shape(d[LABEL_KEY], ref_shape)
 
         return d
 
