@@ -182,6 +182,11 @@ def get_stroke_subject_ids(data_root: str | Path) -> list[str]:
     participants = load_soop_participants(data_root)
     stroke_ids = []
     for pid, info in participants.items():
-        if info.get("acuteischaemicstroke", "").lower() == "yes":
-            stroke_ids.append(pid)
+        # Try multiple column name variants
+        for col in ("acuteischaemicstroke", "acuiteischaemicstroke",
+                     "acute_ischaemic_stroke"):
+            val = info.get(col, "").strip().lower()
+            if val == "yes":
+                stroke_ids.append(pid)
+                break
     return sorted(stroke_ids)
