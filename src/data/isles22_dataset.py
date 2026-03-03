@@ -117,6 +117,7 @@ class ISLES22Dataset(Dataset):
 
         metadata = {
             "subject_id": subject_id,
+            "dataset": "isles22",
             "spacing": dwi_img.header.get_zooms()[:3],
             "affine": dwi_img.affine,
             "shape": dwi.shape,
