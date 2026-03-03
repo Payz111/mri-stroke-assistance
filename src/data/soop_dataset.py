@@ -120,6 +120,15 @@ class SOOPDataset(Dataset):
             result["mask"] = mask_path
         return result
 
+    @staticmethod
+    def _to_3d(vol: np.ndarray) -> np.ndarray:
+        """Ensure volume is 3D. If 4D, take the first volume."""
+        if vol.ndim == 4:
+            vol = vol[..., 0]
+        if vol.ndim != 3:
+            raise ValueError(f"Expected 3D or 4D volume, got {vol.ndim}D")
+        return vol
+
     def __len__(self) -> int:
         return len(self.subject_ids)
 
@@ -131,13 +140,13 @@ class SOOPDataset(Dataset):
         adc_img = nib.load(paths["adc"])
         flair_img = nib.load(paths["flair"])
 
-        dwi = dwi_img.get_fdata(dtype=np.float32)
-        adc = adc_img.get_fdata(dtype=np.float32)
-        flair = flair_img.get_fdata(dtype=np.float32)
+        dwi = self._to_3d(dwi_img.get_fdata(dtype=np.float32))
+        adc = self._to_3d(adc_img.get_fdata(dtype=np.float32))
+        flair = self._to_3d(flair_img.get_fdata(dtype=np.float32))
 
         if "mask" in paths:
             mask_img = nib.load(paths["mask"])
-            mask = mask_img.get_fdata(dtype=np.float32)
+            mask = self._to_3d(mask_img.get_fdata(dtype=np.float32))
             mask = (mask > 0).astype(np.float32)
         else:
             # No mask -- create empty mask matching DWI shape
