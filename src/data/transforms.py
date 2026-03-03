@@ -80,12 +80,34 @@ class StackModalities(T.Transform):
 
     Removes raw modality keys to avoid collation errors in DataLoader
     (raw volumes have different shapes across subjects).
+    Forces all modalities to match DWI shape before stacking.
     """
+
+    @staticmethod
+    def _match_shape(vol: np.ndarray, target_shape: tuple) -> np.ndarray:
+        """Crop or zero-pad vol to exactly match target_shape."""
+        if vol.shape == target_shape:
+            return vol
+        result = np.zeros(target_shape, dtype=vol.dtype)
+        slices_src = []
+        slices_dst = []
+        for s, t in zip(vol.shape, target_shape):
+            m = min(s, t)
+            slices_src.append(slice(0, m))
+            slices_dst.append(slice(0, m))
+        result[tuple(slices_dst)] = vol[tuple(slices_src)]
+        return result
 
     def __call__(self, data: dict) -> dict:
         d = dict(data)
-        d["image"] = np.stack([d["dwi"], d["adc"], d["flair"]], axis=0)
-        d["label"] = d["mask"][np.newaxis]  # (1, D, H, W)
+        ref_shape = d["dwi"].shape
+        dwi = d["dwi"]
+        adc = self._match_shape(d["adc"], ref_shape)
+        flair = self._match_shape(d["flair"], ref_shape)
+        mask = self._match_shape(d["mask"], ref_shape)
+
+        d["image"] = np.stack([dwi, adc, flair], axis=0)
+        d["label"] = mask[np.newaxis]  # (1, D, H, W)
         # Remove raw keys -- only image/label needed downstream
         for key in ("dwi", "adc", "flair", "mask"):
             del d[key]
