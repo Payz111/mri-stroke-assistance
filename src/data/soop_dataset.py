@@ -145,19 +145,29 @@ class SOOPDataset(Dataset):
                 continue
         raise RuntimeError(f"Could not load any subject starting from index {index}")
 
+    @staticmethod
+    def _reorient_to_canonical(img: nib.Nifti1Image) -> nib.Nifti1Image:
+        """Reorient NIfTI image to canonical (RAS+) orientation.
+
+        SOOP FLAIR can be coronal while DWI is axial. Without reorientation,
+        the voxel arrays have incompatible axis ordering.
+        """
+        return nib.as_closest_canonical(img)
+
     def _load_subject(self, subject_id: str) -> dict[str, Any]:
         paths = self._get_paths(subject_id)
 
-        dwi_img = nib.load(paths["dwi"])
-        adc_img = nib.load(paths["adc"])
-        flair_img = nib.load(paths["flair"])
+        # Reorient all modalities to canonical (RAS+) so axes are consistent
+        dwi_img = self._reorient_to_canonical(nib.load(paths["dwi"]))
+        adc_img = self._reorient_to_canonical(nib.load(paths["adc"]))
+        flair_img = self._reorient_to_canonical(nib.load(paths["flair"]))
 
         dwi = self._to_3d(dwi_img.get_fdata(dtype=np.float32))
         adc = self._to_3d(adc_img.get_fdata(dtype=np.float32))
         flair = self._to_3d(flair_img.get_fdata(dtype=np.float32))
 
         if "mask" in paths:
-            mask_img = nib.load(paths["mask"])
+            mask_img = self._reorient_to_canonical(nib.load(paths["mask"]))
             mask = self._to_3d(mask_img.get_fdata(dtype=np.float32))
             mask = (mask > 0).astype(np.float32)
         else:
