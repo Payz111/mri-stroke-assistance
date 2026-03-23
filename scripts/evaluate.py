@@ -100,19 +100,16 @@ def main() -> None:
         raw_sample = val_ds_raw[i]
 
         image = sample["image"].unsqueeze(0).to(device)
+        # Use transformed GT at model resolution (128x128x80)
+        gt_tensor = sample["label"]
 
         with torch.no_grad():
             logits = model(image)
             pred_prob = torch.sigmoid(logits)
             pred_mask = (pred_prob > 0.5).float()
 
-        # Convert to numpy, remove batch/channel dims
         pred_np = pred_mask[0, 0].cpu().numpy()
-        gt_np = (raw_sample["mask"] > 0).astype(np.float32)
-
-        # Crop prediction back to GT shape if needed (due to DivisiblePad)
-        gt_shape = gt_np.shape
-        pred_np = pred_np[:gt_shape[0], :gt_shape[1], :gt_shape[2]]
+        gt_np = (gt_tensor[0].numpy() > 0).astype(np.float32)
 
         predictions.append(pred_np)
         ground_truths.append(gt_np)
