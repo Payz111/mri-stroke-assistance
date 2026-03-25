@@ -8,10 +8,17 @@ Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured fin
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Dice score | **0.606** | Validation set, fold 0 |
+| Dice (per-subject mean) | **0.567** | Validation set (50 subjects), fold 0 |
+| Dice (median) | **0.629** | Less affected by tiny lesion outliers |
+| Dice (batch-averaged) | **0.705** | Training-time metric |
+| HD95 | 19.1 mm | 95th percentile Hausdorff distance |
 | Model | 3D U-Net (MONAI) | 4.7M parameters |
-| Training | 100 epochs | Kaggle T4 GPU |
-| Dataset | ISLES 2022 | 250 cases, 5-fold CV |
+| Training | 50 epochs | Kaggle T4 GPU, ~10h |
+| Training data | ISLES 2022 + SOOP | 1321 cases combined |
+
+**By lesion size:** Tiny 0.19 | Small 0.58 | Medium 0.72 | Large 0.77 (Dice mean)
+
+Training on combined data (ISLES 2022 + SOOP) improved batch-averaged Dice from 0.606 to **0.705** (+16.4%). See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for detailed stratified analysis.
 
 ## What it does
 
@@ -74,7 +81,7 @@ src/
 configs/         YAML configurations (model, training, augmentation)
 scripts/         CLI entry points (train, evaluate, smoke tests)
 demo/            Gradio web demo
-notebooks/       EDA + Kaggle training notebook
+notebooks/       EDA, Kaggle training, evaluation notebooks
 data/splits/     5-fold cross-validation splits
 ```
 
@@ -108,8 +115,8 @@ python demo/app.py
 #    https://zenodo.org/record/7153326
 #    Extract to data/raw/isles22/ISLES-2022/
 
-# 2. Train (GPU recommended)
-python scripts/train.py --fold 0 --epochs 100 --device cuda
+# 2. Train (GPU recommended, see notebooks/ for Kaggle notebooks)
+python scripts/train.py --fold 0 --epochs 50 --device cuda
 
 # 3. Evaluate
 python scripts/evaluate.py --checkpoint outputs/fold_0/checkpoints/best_model.pth --fold 0
@@ -117,6 +124,8 @@ python scripts/evaluate.py --checkpoint outputs/fold_0/checkpoints/best_model.pt
 # 4. Test findings + report pipeline
 python scripts/smoke_test_findings.py --synthetic
 ```
+
+For combined training with SOOP dataset, see `notebooks/03_kaggle_combined_training.ipynb`.
 
 ## Example Report Output
 
@@ -140,13 +149,14 @@ IMPRESSION:
 Acute ischemic infarct, left, total volume 8.5 mL (confidence: 80%).
 ```
 
-## Dataset
+## Datasets
 
-| Dataset | Modalities | Cases | Splits |
-|---------|-----------|-------|--------|
-| [ISLES 2022](https://zenodo.org/record/7153326) | DWI, ADC, FLAIR | 250 | 5-fold CV (200/50) |
+| Dataset | Source | Modalities | Cases | Role |
+|---------|--------|-----------|-------|------|
+| [ISLES 2022](https://zenodo.org/record/7153326) | Zenodo | DWI, ADC, FLAIR | 250 | Train (200) + Val (50), 5-fold CV |
+| [SOOP](https://openneuro.org/datasets/ds004889) | OpenNeuro | DWI, ADC, FLAIR | 1121 | Training only |
 
-Key statistics:
+ISLES 2022 key statistics:
 - Median lesion volume: 6.66 mL
 - Size distribution: 43 tiny (<1mL), 95 small (1-10mL), 79 medium (10-50mL), 30 large (>50mL)
 - 3 cases with empty masks (negative controls)

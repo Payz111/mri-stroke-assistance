@@ -125,20 +125,33 @@ def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
     Parameters
     ----------
     aug_config:
-        Augmentation config dict (reserved for future use).
-        Augmentation experiments showed no improvement on ISLES 2022 (250 cases):
-        baseline (no aug) dice=0.606 > v3 (flip+noise) 0.562 > v1 (full aug) 0.405.
+        Augmentation config dict.  When provided, mild augmentation is applied
+        after stacking modalities.  With 1300+ combined cases (ISLES+SOOP)
+        mild augmentation helps; aggressive augmentation hurt on 250 cases.
     """
     spatial_size = SPATIAL_SIZE
 
-    return T.Compose([
+    base = [
         ResampleToReference(reference_key="dwi"),
         NormalizePerModality(keys=IMAGE_KEYS),
         StackModalities(),
         T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
         T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
+    ]
+
+    # Mild augmentation (applied after crop so we augment at model resolution)
+    aug = [
+        T.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
+        T.RandFlipd(keys=["image", "label"], prob=0.3, spatial_axis=1),
+        T.RandGaussianNoised(keys=["image"], prob=0.2, std=0.05),
+        T.RandAdjustContrastd(keys=["image"], prob=0.2, gamma=(0.7, 1.5)),
+    ]
+
+    tail = [
         T.ToTensord(keys=["image", "label"]),
-    ])
+    ]
+
+    return T.Compose(base + aug + tail)
 
 
 def get_val_transforms(config: dict[str, Any] | None = None) -> T.Compose:

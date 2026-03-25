@@ -18,11 +18,11 @@ Status: IN PROGRESS
 | Gate | Статус | Завершено | Заметки |
 |------|--------|-----------|---------|
 | Gate A - Feasibility | ✅ COMPLETE | 100% | Данные + EDA + splits готовы |
-| Gate B - Baseline Training | ✅ COMPLETE | 100% | val_dice=0.606 (100 epochs, Kaggle T4) |
+| Gate B - Baseline Training | ✅ COMPLETE | 100% | val_dice=0.705 (ISLES+SOOP combined, 50 epochs, Kaggle T4) |
 | Gate C - Evaluation | ✅ COMPLETE | 100% | Metrics + stratified eval + error analysis |
 | Gate D - Structured Findings | ✅ COMPLETE | 100% | Builder + all extractors |
 | Gate E - Report Generation | ✅ COMPLETE | 100% | Template-based, validator, zero hallucinations |
-| Gate F - Demo & Docs | 🟡 IN PROGRESS | 60% | Gradio demo done, README/docs pending |
+| Gate F - Demo & Docs | ✅ COMPLETE | 100% | Gradio demo, Dockerfile, README |
 | Gate G - V2 Perfusion | ⬜ NOT STARTED | 0% | |
 | Gate H - Portfolio Ready | ⬜ NOT STARTED | 0% | |
 
@@ -43,6 +43,22 @@ Status: IN PROGRESS
 ---
 
 ## Выполнено (история)
+
+### Session 6 (2026-03-10) -- Claude Code, Combined Training
+
+**ISLES + SOOP Combined Training -- val_dice=0.705 (+16.4% vs baseline)**
+- Added SOOP dataset (OpenNeuro ds004889, ~1121 subjects with masks)
+- SOOPDataset: `src/data/soop_dataset.py`, CombinedStrokeDataset: `src/data/combined_dataset.py`
+- Fixed FLAIR orientation mismatch (coronal vs axial) via `nib.as_closest_canonical()`
+- Fixed 4D volume handling (`_to_3d()`), corrupt NIfTI graceful skip
+- Fixed ResampleToReference off-by-1 shapes, StackModalities forced shape alignment
+- Training: 50 epochs, ~1300 subjects (200 ISLES + 1100 SOOP), Kaggle T4
+- Best val_dice=0.705 (epoch 35), best val_loss=0.256 (epoch 44)
+- Train dice=0.841, moderate overfitting gap (0.14)
+- Plateau reached at epoch ~35, cosine LR schedule
+- Results: `Training_results/Train_03_10_2026/`
+- Kaggle notebooks: `03a_download_soop.ipynb` (SOOP download+tar), `03_kaggle_combined_training.ipynb`
+- Diagnostic notebook: `03b_soop_diagnostic.ipynb`
 
 ### Session 5 (2026-02-27) -- Claude Code, TASK-006
 
@@ -205,5 +221,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-02-27
-**Обновил:** Claude Code (Session 5)
+**Последнее обновление:** 2026-03-10
+**Обновил:** Claude Code (Session 6)

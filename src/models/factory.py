@@ -6,11 +6,13 @@ from typing import Any
 
 import torch.nn as nn
 
+from src.models.attention_unet import AttentionUNet3D
 from src.models.losses import DiceFocalLoss, DiceLoss, FocalLoss
 from src.models.unet3d import UNet3D
 
 MODEL_REGISTRY: dict[str, type[nn.Module]] = {
     "unet3d": UNet3D,
+    "attention_unet3d": AttentionUNet3D,
 }
 
 LOSS_REGISTRY: dict[str, type[nn.Module]] = {

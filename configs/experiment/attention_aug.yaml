@@ -1,0 +1,42 @@
+# Attention U-Net with mild augmentation
+# Combined ISLES 2022 + SOOP training
+
+experiment:
+  name: "attention_unet3d_aug"
+  description: "3D Attention U-Net with mild augmentation on combined data"
+
+model:
+  name: "attention_unet3d"
+  in_channels: 3
+  out_channels: 1
+  features: [32, 64, 128, 256]
+  dropout: 0.1
+
+training:
+  epochs: 100
+  batch_size: 4
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  optimizer: adamw
+  scheduler: cosine
+  num_workers: 2
+  pin_memory: true
+
+loss:
+  type: "dice_focal"
+  dice_weight: 0.4
+  focal_weight: 0.6
+  focal_gamma: 2.0
+
+augmentation:
+  enabled: true
+  spatial:
+    flip_axes: [0, 1]
+  intensity:
+    noise_std: 0.05
+    gamma_range: [0.7, 1.5]
+
+paths:
+  data_raw: "data/raw/isles22"
+  splits: "data/splits"
+  outputs: "outputs"
