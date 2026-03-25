@@ -39,6 +39,7 @@ class Trainer:
         scheduler: Any | None = None,
         callbacks: Sequence[Any] | None = None,
         config: dict[str, Any] | None = None,
+        use_amp: bool = False,
     ) -> None:
         self.model = model.to(device)
         self.optimizer = optimizer
@@ -50,6 +51,12 @@ class Trainer:
         self.callbacks = list(callbacks or [])
         self.config = config or {}
         self.history: list[dict[str, float]] = []
+
+        # Mixed precision training (AMP)
+        self.use_amp = use_amp and device != "cpu"
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
+        if self.use_amp:
+            logger.info("Mixed precision training (AMP) enabled")
 
     def train_epoch(self, epoch: int) -> dict[str, float]:
         """Run one training epoch."""
@@ -63,13 +70,22 @@ class Trainer:
             labels = batch["label"].to(self.device)
 
             self.optimizer.zero_grad()
-            logits = self.model(images)
-            loss = self.criterion(logits, labels)
-            loss.backward()
-            self.optimizer.step()
+
+            if self.use_amp:
+                with torch.amp.autocast("cuda"):
+                    logits = self.model(images)
+                    loss = self.criterion(logits, labels)
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
+                loss.backward()
+                self.optimizer.step()
 
             total_loss += loss.item()
-            total_dice += compute_dice(logits, labels)
+            total_dice += compute_dice(logits.float(), labels)
             n_batches += 1
 
         return {
@@ -89,11 +105,16 @@ class Trainer:
             images = batch["image"].to(self.device)
             labels = batch["label"].to(self.device)
 
-            logits = self.model(images)
-            loss = self.criterion(logits, labels)
+            if self.use_amp:
+                with torch.amp.autocast("cuda"):
+                    logits = self.model(images)
+                    loss = self.criterion(logits, labels)
+            else:
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
 
             total_loss += loss.item()
-            total_dice += compute_dice(logits, labels)
+            total_dice += compute_dice(logits.float(), labels)
             n_batches += 1
 
         return {
