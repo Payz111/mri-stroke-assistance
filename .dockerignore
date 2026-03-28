@@ -5,8 +5,12 @@ Training_results/
 *.ipynb
 .git/
 .github/
+.claude/
 __pycache__/
 *.pyc
+*.egg-info/
 .ruff_cache/
 .mypy_cache/
 NUL
+docs/
+*.md

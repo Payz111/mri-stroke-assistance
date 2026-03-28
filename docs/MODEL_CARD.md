@@ -1,13 +1,14 @@
-# Model Card: MRI Stroke Segmentation v1.0
+# Model Card: MRI Stroke Segmentation v2.0
 
 ## Model Details
 
-- **Architecture:** 3D U-Net (MONAI)
-- **Parameters:** 4.7M (feature channels: 32, 64, 128, 256)
-- **Checkpoint size:** 19 MB
+- **Architecture:** 3D Attention U-Net (MONAI)
+- **Parameters:** 5.86M (feature channels: 32, 64, 128, 256)
+- **Checkpoint size:** ~23 MB
 - **Input:** DWI + ADC + FLAIR (3-channel, 3D volume)
 - **Output:** Lesion probability map (sigmoid, threshold 0.5)
 - **Dropout:** 0.1
+- **Attention:** Gates at skip connections (focus on lesion boundaries)
 
 ## Training Data
 
@@ -24,14 +25,14 @@
 
 | Parameter | Value |
 |-----------|-------|
-| Loss | DiceFocalLoss (dice_weight=0.5, focal_weight=0.5) |
+| Loss | DiceFocalLoss (dice_weight=0.4, focal_weight=0.6) |
 | Optimizer | AdamW (lr=1e-4, weight_decay=1e-5) |
 | Scheduler | CosineAnnealingLR |
-| Epochs | 50 |
+| Epochs | 40 (early stopping, patience=20) |
 | Batch size | 4 |
+| Mixed precision | AMP (torch.amp.autocast + GradScaler) |
 | Hardware | Kaggle T4 GPU (16 GB) |
-| Training time | ~10 hours |
-| Spatial padding | DivisiblePad(k=16) |
+| Training time | ~13 hours |
 | Normalization | Z-score (per-modality, non-zero voxels) |
 
 ### Preprocessing
@@ -39,30 +40,43 @@
 - Resample FLAIR to DWI space (scipy.ndimage.zoom)
 - Reorient to RAS+ canonical orientation (nibabel)
 - Z-score intensity normalization per modality
-- Pad to divisible-by-16 spatial dimensions
+- Pad/crop to 128x128x80
 
 ### Augmentations (training only)
 
-- Random affine (rotation, scaling)
-- Random intensity shift
+- RandFlip L-R (prob=0.5) and A-P (prob=0.3)
+- RandGaussianNoise (prob=0.2, std=0.05)
+- RandAdjustContrast (prob=0.2, gamma=0.7-1.5)
+
+### Inference Enhancements
+
+- Test-time augmentation: L-R flip averaging (2 forward passes)
+- Post-processing: Remove connected components < 10 voxels
 
 ## Metrics
 
+### Per-Subject Evaluation (50 validation subjects)
+
 | Metric | Value |
 |--------|-------|
-| **Dice (validation)** | **0.705** |
-| Dice (training) | 0.841 |
-| Validation loss | 0.256 |
-| Training loss | 0.193 |
+| **Dice (mean)** | **0.691** |
+| **Dice (median)** | **0.772** |
+| IoU (mean) | 0.573 |
+| HD95 (mean) | 13.4 mm |
+| Sensitivity | 0.697 |
+| Lesion F1 | 0.503 |
 
-Best model saved at epoch 35 (by validation Dice).
+### By Lesion Size (Dice mean)
+
+| Tiny (<1 mL) | Small (1-10 mL) | Medium (10-50 mL) | Large (>50 mL) |
+|---------------|-----------------|-------------------|----------------|
+| 0.38 | 0.71 | 0.82 | 0.83 |
 
 ### Training Dynamics
 
-- Rapid learning in epochs 0-20 (Dice: 0.01 -> 0.70)
-- Plateau reached at epoch ~35
-- Train-val Dice gap: 0.14 (moderate overfitting)
-- Train-val loss gap: 0.07
+- Best model at epoch 30 (by validation Dice)
+- Train-val Dice gap: 0.045 (low overfitting)
+- Batch-averaged val_dice: 0.785
 
 ## Intended Use
 
@@ -74,10 +88,9 @@ Best model saved at epoch 35 (by validation Dice).
 
 - Validated on ISLES 2022 only (multi-center European data)
 - May underperform on:
-  - Very small lesions (< 1 mL)
+  - Very small lesions (< 1 mL): Dice=0.38
   - Posterior fossa lesions
   - Non-standard MRI protocols or scanners not represented in training
-- Moderate overfitting gap (0.14) suggests room for regularization improvement
 - Single fold evaluation (fold 0); full 5-fold CV pending
 - NOT validated for clinical use
 - NOT a medical device

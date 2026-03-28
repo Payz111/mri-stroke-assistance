@@ -8,17 +8,18 @@ Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured fin
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Dice (per-subject mean) | **0.567** | Validation set (50 subjects), fold 0 |
-| Dice (median) | **0.629** | Less affected by tiny lesion outliers |
-| Dice (batch-averaged) | **0.705** | Training-time metric |
-| HD95 | 19.1 mm | 95th percentile Hausdorff distance |
-| Model | 3D U-Net (MONAI) | 4.7M parameters |
-| Training | 50 epochs | Kaggle T4 GPU, ~10h |
+| Dice (per-subject mean) | **0.691** | Validation set (50 subjects), fold 0 |
+| Dice (median) | **0.772** | Less affected by tiny lesion outliers |
+| HD95 | 13.4 mm | 95th percentile Hausdorff distance |
+| Sensitivity | 0.697 | True positive rate |
+| Lesion F1 | 0.503 | Lesion-wise detection score |
+| Model | 3D Attention U-Net (MONAI) | 5.86M parameters |
+| Training | 40 epochs (AMP) | Kaggle T4 GPU |
 | Training data | ISLES 2022 + SOOP | 1321 cases combined |
 
-**By lesion size:** Tiny 0.19 | Small 0.58 | Medium 0.72 | Large 0.77 (Dice mean)
+**By lesion size:** Tiny 0.38 | Small 0.71 | Medium 0.82 | Large 0.83 (Dice mean)
 
-Training on combined data (ISLES 2022 + SOOP) improved batch-averaged Dice from 0.606 to **0.705** (+16.4%). See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for detailed stratified analysis.
+See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for detailed stratified analysis.
 
 ## What it does
 
@@ -45,9 +46,10 @@ NIfTI files (DWI, ADC, FLAIR)
    - Z-score normalization
    - Pad/crop to 128x128x80
         |
-   3D U-Net (MONAI)
+   3D Attention U-Net (MONAI)
    - 4 levels: 32->64->128->256
-   - DiceFocalLoss training
+   - Attention gates at skip connections
+   - DiceFocalLoss + augmentation + AMP
         |
    Binary lesion mask
         |

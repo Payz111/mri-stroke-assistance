@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      target: api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./outputs:/app/outputs:ro
+    environment:
+      - DEVICE=cpu
+      - MODEL_NAME=attention_unet3d
+      - CHECKPOINT_PATH=/app/outputs/fold_0/checkpoints/best_model.pth
+    restart: unless-stopped
+
+  demo:
+    build:
+      context: .
+      target: demo
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./outputs:/app/outputs:ro
+    restart: unless-stopped
