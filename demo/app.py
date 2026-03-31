@@ -149,9 +149,9 @@ def _run_analysis(dwi_path, adc_path, flair_path):
         report += f"\n\n*** VALIDATION WARNING: {issues} ***"
 
     preview = create_montage(dwi, result["pred_mask"], n_slices=6)
-    findings_clean = json.loads(json.dumps(findings, default=str))
+    findings_str = json.dumps(findings, default=str, indent=2)
 
-    return report, findings_clean, preview
+    return report, findings_str, preview
 
 
 def predict_archive(archive_file):
@@ -223,9 +223,9 @@ def predict_synthetic():
         findings = build_findings([mask], dwi, adc, flair, metadata)
         report = generate_report(findings)
         preview = create_overlay_image(dwi, mask)
-        findings_clean = json.loads(json.dumps(findings, default=str))
+        findings_str = json.dumps(findings, default=str, indent=2)
 
-        return report, findings_clean, preview
+        return report, findings_str, preview
 
     except Exception as e:
         return f"Error: {type(e).__name__}: {e}", None, None
@@ -278,7 +278,7 @@ def create_app():
                             label="Draft Radiology Report", lines=18
                         )
 
-                zip_json = gr.JSON(label="Structured Findings (JSON)")
+                zip_json = gr.Code(label="Structured Findings (JSON)", language="json")
 
                 zip_btn.click(
                     fn=predict_archive,
@@ -322,7 +322,7 @@ def create_app():
                             label="Draft Radiology Report", lines=18
                         )
 
-                sep_json = gr.JSON(label="Structured Findings (JSON)")
+                sep_json = gr.Code(label="Structured Findings (JSON)", language="json")
 
                 sep_btn.click(
                     fn=predict_separate,
