@@ -2,6 +2,8 @@
 
 AI-powered assistant for ischemic stroke detection and characterization on brain MRI.
 
+**[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** — try the full pipeline in your browser (no setup needed).
+
 Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured findings (JSON) -> draft radiology report**.
 
 ## Results
@@ -173,13 +175,43 @@ ISLES 2022 key statistics:
 | **Fail-safe** | QC gate: poor quality input -> no prediction |
 | **Reproducible** | Fixed seeds, 5-fold CV, YAML configs |
 
+## Deployment
+
+### Docker
+
+```bash
+# API server (port 8000)
+docker compose up api
+
+# Gradio demo (port 7860)
+docker compose up demo
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Model info |
+| GET | `/health` | Health check |
+| POST | `/predict` | Upload ZIP with DWI/ADC/FLAIR -> get JSON findings + report |
+
+### HuggingFace Spaces
+
+Live at: https://huggingface.co/spaces/Paizutdin/mri-stroke-assist
+
+Deploy your own:
+```bash
+bash scripts/deploy_hf.sh <your-hf-username> [checkpoint-path]
+```
+
 ## Tech Stack
 
 - **Deep Learning:** PyTorch, MONAI
 - **Medical Imaging:** nibabel, SimpleITK, scipy
 - **Training:** AdamW, CosineAnnealingLR, DiceFocalLoss
 - **Evaluation:** Dice, IoU, HD95, lesion-wise F1, stratified by size
-- **Demo:** Gradio
+- **Serving:** FastAPI (REST API), Gradio (web demo), Docker
+- **Deployment:** HuggingFace Spaces, Docker Compose
 - **Config:** YAML (Hydra-ready)
 
 ## License

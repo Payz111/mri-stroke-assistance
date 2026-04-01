@@ -23,6 +23,7 @@ Status: IN PROGRESS
 | Gate D - Structured Findings | ✅ COMPLETE | 100% | Builder + all extractors |
 | Gate E - Report Generation | ✅ COMPLETE | 100% | Template-based, validator, zero hallucinations |
 | Gate F - Demo & Docs | ✅ COMPLETE | 100% | Gradio demo, Dockerfile, README |
+| Gate F2 - Deployment | ✅ COMPLETE | 100% | FastAPI, Docker, HuggingFace Spaces |
 | Gate G - V2 Perfusion | ⬜ NOT STARTED | 0% | |
 | Gate H - Portfolio Ready | ⬜ NOT STARTED | 0% | |
 
@@ -33,16 +34,42 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [x] TASK-006: Structured findings + report generation -- DONE
+- [ ] Загрузка чекпоинта на HF Space для реального инференса
 
 ### Следующие задачи
-1. TASK-007: Full evaluation on val set with best_model.pth
-2. Demo app update (Gradio)
-3. Documentation + portfolio polish
+1. V2 CTP перфузия (Gate G)
+2. Portfolio polish (Gate H)
 
 ---
 
 ## Выполнено (история)
+
+### Session 8 (2026-03-31) -- Claude Code, Deployment
+
+**Docker + FastAPI + HuggingFace Spaces**
+- FastAPI REST API: `src/inference/api.py` (GET /, GET /health, POST /predict)
+- Multi-stage Dockerfile (base -> api, demo targets), docker-compose.yml
+- HuggingFace Spaces deployment: `deploy/hf_spaces/` (app.py, requirements.txt, README.md)
+- Deployment script: `scripts/deploy_hf.sh`
+- Fixed gradio_client schema bug (additionalProperties: true) via monkey-patch
+- Fixed Python 3.13 audioop incompatibility (pinned 3.11)
+- Fixed huggingface_hub HfFolder import error (pinned <0.24)
+- gr.JSON -> gr.Code (language="json") for compatibility
+- Space URL: https://huggingface.co/spaces/Paizutdin/mri-stroke-assist
+- Synthetic Demo working, real inference pending checkpoint upload
+
+### Session 7 (2026-03-27) -- Claude Code, Attention U-Net + Evaluation
+
+**Attention U-Net v2 -- val_dice=0.785 (batch), per-subject Dice=0.691 mean / 0.772 median**
+- Upgraded to Attention U-Net (MONAI): 5.86M params, attention gates at skip connections
+- DiceFocalLoss (dice_weight=0.4, focal_weight=0.6)
+- Augmentation: RandFlip, GaussNoise, AdjustContrast
+- TTA (L-R flip averaging), post-processing (remove <10 voxels)
+- AMP (mixed precision) training, batch_size=8
+- Full per-subject evaluation: Dice 0.691 mean, 0.772 median, HD95 13.4mm
+- Stratified: tiny 0.38, small 0.71, medium 0.82, large 0.83
+- Updated docs: EVALUATION_REPORT.md, MODEL_CARD.md, README.md
+- Results: `Training_results/Train_03_27_2026/`, `Training_results/eval_train_03_27_2026/`
 
 ### Session 6 (2026-03-10) -- Claude Code, Combined Training
 
@@ -221,5 +248,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-03-10
-**Обновил:** Claude Code (Session 6)
+**Последнее обновление:** 2026-03-31
+**Обновил:** Claude Code (Session 8)
