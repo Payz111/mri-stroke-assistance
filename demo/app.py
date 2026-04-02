@@ -231,6 +231,80 @@ def predict_synthetic():
         return f"Error: {type(e).__name__}: {e}", None, None
 
 
+def predict_synthetic_ctp():
+    """Run CTP perfusion analysis on synthetic data (no files needed)."""
+    try:
+        from src.inference.ctp_pipeline import run_ctp_inference
+
+        shape = (64, 64, 40)
+
+        # Normal brain: Tmax ~3s, CBF ~50 ml/100g/min
+        tmax = np.random.normal(3.0, 0.5, shape).astype(np.float32)
+        tmax = np.clip(tmax, 0.5, 30.0)
+        cbf = np.random.normal(50.0, 10.0, shape).astype(np.float32)
+        cbf = np.clip(cbf, 5.0, 100.0)
+
+        # Hypoperfusion region (Tmax > 6s)
+        tmax[18:38, 18:42, 14:26] = np.random.normal(10.0, 2.0, (20, 24, 12)).astype(np.float32)
+
+        # Core within hypoperfusion (CBF very low)
+        cbf[22:32, 24:36, 16:24] = np.random.normal(8.0, 2.0, (10, 12, 8)).astype(np.float32)
+
+        metadata = {
+            "subject_id": "synthetic-ctp-demo",
+            "spacing": (1.0, 1.0, 5.0),
+        }
+
+        result = run_ctp_inference(tmax=tmax, cbf=cbf, metadata=metadata)
+
+        report = result["report"]
+        findings = result["findings"]
+        validation = result["validation"]
+
+        if not validation["valid"]:
+            issues = "; ".join(validation["issues"])
+            report += f"\n\n*** VALIDATION WARNING: {issues} ***"
+
+        findings_str = json.dumps(findings, default=str, indent=2)
+        return report, findings_str, result["preview"]
+
+    except Exception as e:
+        return f"Error: {type(e).__name__}: {e}", None, None
+
+
+def predict_ctp_separate(tmax_file, cbf_file):
+    """Run CTP analysis on uploaded Tmax and CBF NIfTI files."""
+    if tmax_file is None or cbf_file is None:
+        return "Upload both files: Tmax and CBF.", None, None
+
+    try:
+        from src.inference.ctp_pipeline import run_ctp_inference
+
+        tmax, tmax_img = _load_nifti(str(tmax_file))
+        cbf, _ = _load_nifti(str(cbf_file))
+
+        metadata = {
+            "subject_id": Path(tmax_file).parent.name or "uploaded",
+            "spacing": tuple(float(s) for s in tmax_img.header.get_zooms()[:3]),
+        }
+
+        result = run_ctp_inference(tmax=tmax, cbf=cbf, metadata=metadata)
+
+        report = result["report"]
+        findings = result["findings"]
+        validation = result["validation"]
+
+        if not validation["valid"]:
+            issues = "; ".join(validation["issues"])
+            report += f"\n\n*** VALIDATION WARNING: {issues} ***"
+
+        findings_str = json.dumps(findings, default=str, indent=2)
+        return report, findings_str, result["preview"]
+
+    except Exception as e:
+        return f"Error: {type(e).__name__}: {e}", None, None
+
+
 def create_app():
     """Create and return the Gradio app."""
     try:
@@ -242,7 +316,7 @@ def create_app():
         gr.Markdown(
             """
             # MRI Stroke Assist
-            AI-powered assistant for ischemic stroke detection on brain MRI.
+            AI-powered assistant for ischemic stroke detection on brain MRI and CT perfusion.
 
             > **Disclaimer:** Research tool only. All results require expert review.
             """
@@ -328,6 +402,58 @@ def create_app():
                     fn=predict_separate,
                     inputs=[dwi_input, adc_input, flair_input],
                     outputs=[sep_report, sep_json, sep_preview],
+                )
+
+            # Tab 3: CT Perfusion (V2)
+            with gr.Tab("CT Perfusion (V2)"):
+                gr.Markdown(
+                    "**V2 Pipeline:** Upload CTP derivative maps (Tmax, CBF) "
+                    "for threshold-based core/penumbra/mismatch analysis.\n\n"
+                    "Thresholds: Tmax >= 6s (hypoperfusion), rCBF <= 30% (core).\n"
+                    "No deep learning model needed -- clinical standard approach."
+                )
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        tmax_input = gr.File(
+                            label="Tmax map (.nii / .nii.gz)",
+                            file_types=[".nii", ".nii.gz", ".gz"],
+                        )
+                        cbf_input = gr.File(
+                            label="CBF map (.nii / .nii.gz)",
+                            file_types=[".nii", ".nii.gz", ".gz"],
+                        )
+                        with gr.Row():
+                            ctp_btn = gr.Button(
+                                "Analyze", variant="primary", size="lg"
+                            )
+                            ctp_demo_btn = gr.Button(
+                                "Synthetic CTP Demo",
+                                variant="secondary",
+                                size="lg",
+                            )
+
+                    with gr.Column(scale=2):
+                        ctp_preview = gr.Image(
+                            label="Core (red) / Penumbra (green)",
+                            height=400,
+                        )
+                        ctp_report = gr.Textbox(
+                            label="CT Perfusion Report", lines=18
+                        )
+
+                ctp_json = gr.Code(
+                    label="Structured Findings (JSON)", language="json"
+                )
+
+                ctp_btn.click(
+                    fn=predict_ctp_separate,
+                    inputs=[tmax_input, cbf_input],
+                    outputs=[ctp_report, ctp_json, ctp_preview],
+                )
+                ctp_demo_btn.click(
+                    fn=predict_synthetic_ctp,
+                    inputs=[],
+                    outputs=[ctp_report, ctp_json, ctp_preview],
                 )
 
     return app

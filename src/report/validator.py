@@ -98,7 +98,7 @@ def validate_report(
     lines_to_check = []
     for line in report_text.split("\n"):
         # Skip header lines (timestamp, study ID, model version)
-        if line.startswith("Generated:") or line.startswith("Study ID:"):
+        if line.startswith(("Generated:", "Study ID:", "Model:")):
             continue
         lines_to_check.append(line)
     scannable_text = "\n".join(lines_to_check)
@@ -120,6 +120,11 @@ def validate_report(
     allowed_numbers.add(f"{conf:.2f}")
     allowed_numbers.add(f"{conf:.0%}".replace("%", ""))
 
+    # V2 perfusion numbers
+    perfusion = findings.get("perfusion")
+    if perfusion:
+        _add_perfusion_numbers(perfusion, allowed_numbers)
+
     suspicious = []
     for num in report_numbers:
         val = float(num)
@@ -136,5 +141,82 @@ def validate_report(
         issues.append(f"Unverified numbers in report: {suspicious}")
     checks["no_hallucinated_numbers"] = numbers_ok
 
+    # Check 6: Perfusion section validation (V2)
+    perfusion = findings.get("perfusion")
+    if perfusion:
+        perf_checks = _validate_perfusion(report_text, perfusion)
+        checks.update(perf_checks["checks"])
+        issues.extend(perf_checks["issues"])
+
     valid = len(issues) == 0
     return {"valid": valid, "issues": issues, "checks": checks}
+
+
+def _add_perfusion_numbers(
+    perfusion: dict[str, Any],
+    allowed: set[str],
+) -> None:
+    """Add V2 perfusion numbers to the allowed set."""
+    # Thresholds
+    thresholds = perfusion.get("thresholds_used", {})
+    allowed.add(str(thresholds.get("hypoperfusion_tmax_sec", 6.0)))
+    rcbf = thresholds.get("core_rcbf_threshold", 0.30)
+    allowed.add(str(int(rcbf * 100)))  # e.g. "30"
+
+    # Volumes
+    for key in ("core", "hypoperfusion", "penumbra"):
+        section = perfusion.get(key, {})
+        vol = section.get("volume_ml", 0)
+        allowed.add(f"{vol:.1f}")
+
+    # Mismatch
+    mismatch = perfusion.get("mismatch", {})
+    allowed.add(str(mismatch.get("mismatch_ratio", 0)))
+    allowed.add(f"{mismatch.get('mismatch_volume_ml', 0):.1f}")
+
+    # Criteria values
+    criteria = mismatch.get("criteria_used", {})
+    for v in criteria.values():
+        allowed.add(str(v))
+
+
+def _validate_perfusion(
+    report_text: str,
+    perfusion: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate perfusion section of the report."""
+    issues = []
+    checks = {}
+    text_lower = report_text.lower()
+
+    # Check core volume mentioned
+    core = perfusion.get("core", {})
+    core_vol = f"{core.get('volume_ml', 0):.1f}"
+    core_ok = core_vol in report_text
+    if not core_ok:
+        issues.append(f"Core volume {core_vol} mL not found in report")
+    checks["perfusion_core_volume"] = core_ok
+
+    # Check mismatch status mentioned
+    mismatch = perfusion.get("mismatch", {})
+    status = mismatch.get("target_mismatch_status", "")
+    status_keywords = {
+        "target_mismatch": ["target mismatch"],
+        "no_mismatch": ["no target mismatch", "no mismatch"],
+        "indeterminate": ["indeterminate"],
+    }
+    keywords = status_keywords.get(status, [status])
+    mismatch_ok = any(kw in text_lower for kw in keywords)
+    if not mismatch_ok:
+        issues.append(f"Mismatch status '{status}' not reflected in report")
+    checks["perfusion_mismatch_status"] = mismatch_ok
+
+    # Check threshold values mentioned
+    thresholds = perfusion.get("thresholds_used", {})
+    tmax_t = str(thresholds.get("hypoperfusion_tmax_sec", 6.0))
+    tmax_ok = tmax_t in report_text
+    if not tmax_ok:
+        issues.append(f"Tmax threshold {tmax_t}s not found in report")
+    checks["perfusion_tmax_threshold"] = tmax_ok
+
+    return {"issues": issues, "checks": checks}

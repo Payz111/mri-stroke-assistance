@@ -21,8 +21,16 @@ from src.report.templates import (
     LESION_SUMMARY_TEMPLATE,
     MISMATCH_TEXT,
     NO_LESION_FINDINGS,
+    PERFUSION_CORE_TEMPLATE,
+    PERFUSION_HEADER_TEMPLATE,
+    PERFUSION_HYPOPERFUSION_TEMPLATE,
+    PERFUSION_IMPRESSION_TEMPLATE,
+    PERFUSION_MISMATCH_TEMPLATE,
+    PERFUSION_PENUMBRA_TEMPLATE,
+    PERFUSION_QC_FAIL_TEMPLATE,
     PROTOCOL_TEMPLATE,
     QC_FAIL_TEMPLATE,
+    TARGET_MISMATCH_TEXT,
 )
 
 
@@ -87,6 +95,11 @@ def generate_report(findings: dict[str, Any]) -> str:
         for lesion in lesions:
             sections.append(_render_lesion(lesion))
 
+    # V2 Perfusion section (if present)
+    perfusion = findings.get("perfusion")
+    if perfusion:
+        sections.append(_render_perfusion(perfusion))
+
     # Impression
     impression = findings.get("overall_impression", "indeterminate")
     impression_text = IMPRESSION_TEXT.get(impression, impression)
@@ -100,9 +113,104 @@ def generate_report(findings: dict[str, Any]) -> str:
         impression_body += f", {lat_str}, total volume {vol_text}"
     impression_body += f" (confidence: {confidence:.0%})."
 
+    # Add perfusion impression if present
+    if perfusion:
+        perf_impression = _render_perfusion_impression(perfusion)
+        if perf_impression:
+            impression_body += "\n" + perf_impression
+
     sections.append(IMPRESSION_TEMPLATE.format(impression_body=impression_body))
 
     return "\n".join(sections)
+
+
+def _render_perfusion(perfusion: dict[str, Any]) -> str:
+    """Render the CT perfusion analysis section."""
+    parts = []
+
+    # Perfusion QC
+    qc = perfusion.get("perfusion_quality_gate", {})
+    if not qc.get("passed", True):
+        reasons = ", ".join(qc.get("reasons", ["unspecified"]))
+        parts.append(PERFUSION_QC_FAIL_TEMPLATE.format(reasons=reasons))
+
+    # Header
+    thresholds = perfusion.get("thresholds_used", {})
+    tmax_t = thresholds.get("hypoperfusion_tmax_sec", 6.0)
+    rcbf_t = thresholds.get("core_rcbf_threshold", 0.30)
+    maps = perfusion.get("maps_present", {})
+    available = [k.upper() for k, v in maps.items() if v]
+
+    parts.append(PERFUSION_HEADER_TEMPLATE.format(
+        source=perfusion.get("perfusion_source", "CTP"),
+        maps_available=", ".join(available) if available else "none",
+        tmax_threshold=tmax_t,
+        rcbf_pct=int(rcbf_t * 100),
+    ))
+
+    # Core
+    core = perfusion.get("core", {})
+    parts.append(PERFUSION_CORE_TEMPLATE.format(
+        rcbf_pct=int(rcbf_t * 100),
+        core_volume_ml=f"{core.get('volume_ml', 0):.1f}",
+    ))
+
+    # Hypoperfusion
+    hypo = perfusion.get("hypoperfusion", {})
+    parts.append(PERFUSION_HYPOPERFUSION_TEMPLATE.format(
+        tmax_threshold=tmax_t,
+        hypo_volume_ml=f"{hypo.get('volume_ml', 0):.1f}",
+    ))
+
+    # Penumbra
+    penumbra = perfusion.get("penumbra", {})
+    if penumbra:
+        parts.append(PERFUSION_PENUMBRA_TEMPLATE.format(
+            penumbra_volume_ml=f"{penumbra.get('volume_ml', 0):.1f}",
+        ))
+
+    # Mismatch
+    mismatch = perfusion.get("mismatch", {})
+    status = mismatch.get("target_mismatch_status", "indeterminate")
+    criteria = mismatch.get("criteria_used", {})
+
+    status_template = TARGET_MISMATCH_TEXT.get(status, TARGET_MISMATCH_TEXT["indeterminate"])
+    if status == "target_mismatch":
+        status_text = status_template.format(
+            core_max=criteria.get("core_max_ml", 70),
+            ratio_min=criteria.get("mismatch_ratio_min", 1.8),
+            vol_min=criteria.get("mismatch_volume_min_ml", 15),
+        )
+    else:
+        status_text = status_template
+
+    parts.append(PERFUSION_MISMATCH_TEMPLATE.format(
+        ratio=mismatch.get("mismatch_ratio", 0),
+        status_text=status_text,
+    ))
+
+    return "\n".join(parts)
+
+
+def _render_perfusion_impression(perfusion: dict[str, Any]) -> str:
+    """Render perfusion summary for the impression section."""
+    core = perfusion.get("core", {})
+    penumbra = perfusion.get("penumbra", {})
+    mismatch = perfusion.get("mismatch", {})
+
+    status = mismatch.get("target_mismatch_status", "indeterminate")
+    status_short = {
+        "target_mismatch": "target mismatch present",
+        "no_mismatch": "no target mismatch",
+        "indeterminate": "mismatch indeterminate",
+    }.get(status, status)
+
+    return PERFUSION_IMPRESSION_TEMPLATE.format(
+        core_vol=f"{core.get('volume_ml', 0):.1f}",
+        penumbra_vol=f"{penumbra.get('volume_ml', 0):.1f}",
+        ratio=mismatch.get("mismatch_ratio", 0),
+        status=status_short,
+    )
 
 
 def _render_lesion(lesion: dict[str, Any]) -> str:

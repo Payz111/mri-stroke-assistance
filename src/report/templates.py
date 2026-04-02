@@ -78,3 +78,52 @@ FLAIR_TEXT = {
     "subtle": "FLAIR signal subtle/equivocal",
     "none": "No FLAIR hyperintensity",
 }
+
+# ---------------------------------------------------------------------------
+# V2 Perfusion templates
+# ---------------------------------------------------------------------------
+
+PERFUSION_HEADER_TEMPLATE = """\
+CT PERFUSION ANALYSIS:
+Perfusion source: {source}. Maps available: {maps_available}.
+Thresholds: Tmax >= {tmax_threshold}s (hypoperfusion), rCBF <= {rcbf_pct}% (core).
+"""
+
+PERFUSION_CORE_TEMPLATE = """\
+Ischemic core (rCBF <= {rcbf_pct}%): {core_volume_ml} mL.
+"""
+
+PERFUSION_HYPOPERFUSION_TEMPLATE = """\
+Hypoperfusion region (Tmax >= {tmax_threshold}s): {hypo_volume_ml} mL.
+"""
+
+PERFUSION_PENUMBRA_TEMPLATE = """\
+Penumbra (tissue at risk): {penumbra_volume_ml} mL.
+"""
+
+PERFUSION_MISMATCH_TEMPLATE = """\
+Mismatch ratio: {ratio} (hypoperfusion/core). {status_text}
+"""
+
+PERFUSION_QC_FAIL_TEMPLATE = """\
+*** PERFUSION QUALITY CHECK FAILED ***
+Reasons: {reasons}
+Perfusion analysis results should be interpreted with caution.
+"""
+
+TARGET_MISMATCH_TEXT = {
+    "target_mismatch": (
+        "TARGET MISMATCH PRESENT -- patient may benefit from "
+        "reperfusion therapy (core <{core_max}mL, ratio >{ratio_min}, "
+        "mismatch >{vol_min}mL)."
+    ),
+    "no_mismatch": "No target mismatch identified.",
+    "indeterminate": (
+        "Mismatch assessment indeterminate, clinical correlation required."
+    ),
+}
+
+PERFUSION_IMPRESSION_TEMPLATE = """\
+CT Perfusion: core {core_vol} mL, penumbra {penumbra_vol} mL, \
+mismatch ratio {ratio} ({status}).
+"""
