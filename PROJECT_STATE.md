@@ -24,7 +24,7 @@ Status: IN PROGRESS
 | Gate E - Report Generation | ✅ COMPLETE | 100% | Template-based, validator, zero hallucinations |
 | Gate F - Demo & Docs | ✅ COMPLETE | 100% | Gradio demo, Dockerfile, README |
 | Gate F2 - Deployment | ✅ COMPLETE | 100% | FastAPI, Docker, HuggingFace Spaces |
-| Gate G - V2 Perfusion | ⬜ NOT STARTED | 0% | |
+| Gate G - V2 Perfusion | 🟡 IN PROGRESS | 60% | Core pipeline done, awaiting ISLES 2024 data |
 | Gate H - Portfolio Ready | ⬜ NOT STARTED | 0% | |
 
 **Легенда:** ⬜ Not Started | 🟡 In Progress | ✅ Complete | 🔴 Blocked
@@ -34,15 +34,34 @@ Status: IN PROGRESS
 ## Текущие задачи (This Session)
 
 ### В работе сейчас
-- [ ] Загрузка чекпоинта на HF Space для реального инференса
+- [ ] Скачать ISLES 2024 (99GB, scripts/download_isles24.sh)
+- [ ] ISLES24Dataset class (src/data/isles24_dataset.py)
+- [ ] CTP transforms (src/data/ctp_transforms.py)
 
 ### Следующие задачи
-1. V2 CTP перфузия (Gate G)
-2. Portfolio polish (Gate H)
+1. EDA ISLES 2024 + splits (notebooks/05_eda_isles24.ipynb)
+2. Evaluation on ISLES 2024 (notebooks/06_eval_isles24.ipynb)
+3. Deploy V2 demo to HF Space
+4. Portfolio polish (Gate H)
 
 ---
 
 ## Выполнено (история)
+
+### Session 9 (2026-04-02) -- Claude Code, V2 CTP Perfusion Pipeline
+
+**V2 CTP Perfusion -- threshold-based core/penumbra/mismatch (14 files, +1657 LOC)**
+- Perfusion extractors: `src/v2_perfusion/` (threshold_maps, brain_mask, contralateral, qc)
+  - Hypoperfusion: Tmax >= 6s, Core: rCBF <= 30%, Penumbra: hypo - core
+  - Target mismatch: core < 70mL AND ratio > 1.8 AND mismatch vol > 15mL
+- V2 findings builder: `src/findings/v2_builder.py` (plain dicts, same pattern as V1)
+- Report extended: perfusion section templates, generator, validator (+perfusion checks)
+- CTP pipeline: `src/inference/ctp_pipeline.py` (full threshold-based pipeline)
+- CTP visualization: `src/inference/ctp_visualize.py` (core=red, penumbra=green overlay)
+- Gradio demo: CT Perfusion (V2) tab + Synthetic CTP Demo button
+- ISLES 2024 download script: `scripts/download_isles24.sh` (Zenodo, 99GB)
+- 15 unit tests: all passing (`tests/test_v2_perfusion.py`)
+- Remaining: download ISLES 2024 data, ISLES24Dataset class, CTP transforms, evaluation
 
 ### Session 8 (2026-03-31) -- Claude Code, Deployment
 
@@ -248,5 +267,5 @@ Status: IN PROGRESS
 
 ---
 
-**Последнее обновление:** 2026-03-31
-**Обновил:** Claude Code (Session 8)
+**Последнее обновление:** 2026-04-02
+**Обновил:** Claude Code (Session 9)
