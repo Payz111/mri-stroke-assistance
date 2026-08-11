@@ -84,7 +84,7 @@ Status: IN PROGRESS
 - DiceFocalLoss (dice_weight=0.4, focal_weight=0.6)
 - Augmentation: RandFlip, GaussNoise, AdjustContrast
 - TTA (L-R flip averaging), post-processing (remove <10 voxels)
-- AMP (mixed precision) training, batch_size=8
+- AMP (mixed precision) training, batch_size=4 (per experiment_meta.json of the run)
 - Full per-subject evaluation: Dice 0.691 mean, 0.772 median, HD95 13.4mm
 - Stratified: tiny 0.38, small 0.71, medium 0.82, large 0.83
 - Updated docs: EVALUATION_REPORT.md, MODEL_CARD.md, README.md
