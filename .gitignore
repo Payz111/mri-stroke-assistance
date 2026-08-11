@@ -27,6 +27,8 @@ env/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
 
 # Local working notes -- kept out of the published repository
 PROJECT_STATE.md

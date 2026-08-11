@@ -34,7 +34,10 @@ qc:
   require_modalities: ["dwi", "adc", "flair"]
 
 model:
-  name: "unet3d"
+  # Matches the released checkpoint. The plain "unet3d" baseline is kept in
+  # configs/experiment/baseline.yaml; loading a checkpoint with the wrong
+  # architecture here fails in load_state_dict.
+  name: "attention_unet3d"
   in_channels: 3  # DWI, ADC, FLAIR
   out_channels: 1  # lesion probability
   features: [32, 64, 128, 256]

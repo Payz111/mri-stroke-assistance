@@ -34,7 +34,6 @@
 ```bash
 python scripts/evaluate.py \
     --checkpoint Training_results/Train_03_27_2026/checkpoints/best_model.pth \
-    --config configs/experiment/attention_aug.yaml \
     --fold 0 --device cpu
 ```
 

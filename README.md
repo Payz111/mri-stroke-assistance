@@ -34,7 +34,7 @@ Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured fin
 > far, so there is no cross-fold variance estimate yet. They are therefore **not directly
 > comparable** to ISLES 2022 challenge leaderboard scores, which are computed on a hidden
 > test set. Reproduce with:
-> `python scripts/evaluate.py --checkpoint <ckpt> --config configs/experiment/attention_aug.yaml`
+> `python scripts/evaluate.py --checkpoint <ckpt> --fold 0`
 
 See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for the detailed stratified analysis, and
 [Training_results/](Training_results/) for the raw artifacts behind every number — training
@@ -156,7 +156,6 @@ python scripts/train.py --fold 0 --epochs 50 --device cuda
 # 3. Evaluate (TTA + small-component filtering are on by default)
 python scripts/evaluate.py \
     --checkpoint outputs/fold_0/checkpoints/best_model.pth \
-    --config configs/experiment/attention_aug.yaml \
     --fold 0
 
 # 4. Test findings + report pipeline
@@ -169,16 +168,15 @@ python scripts/smoke_test_findings.py --synthetic
 python scripts/infer_single.py \
     --input data/raw/isles22/ISLES-2022/sub-strokecase0001 \
     --output outputs/case0001 \
-    --checkpoint outputs/fold_0/checkpoints/best_model.pth \
-    --model-config configs/experiment/attention_aug.yaml
+    --checkpoint outputs/fold_0/checkpoints/best_model.pth
 ```
 
 Writes `prediction_mask.nii.gz`, `findings.json` and `report.txt`.
 
-> **Checkpoint / architecture must match.** `configs/default.yaml` describes the plain
-> `unet3d` baseline. The published checkpoint is an **Attention U-Net**, so pass
-> `--config` / `--model-config configs/experiment/attention_aug.yaml` when loading it,
-> otherwise `load_state_dict` will fail.
+> **Checkpoint / architecture must match.** `configs/default.yaml` describes the released
+> Attention U-Net, so the commands above need no `--config`. To load the plain `unet3d`
+> baseline instead, pass `--config configs/experiment/baseline.yaml` — a checkpoint loaded
+> against the wrong architecture fails in `load_state_dict`.
 
 For combined training with SOOP dataset, see `notebooks/03_kaggle_combined_training.ipynb`.
 

@@ -8,9 +8,10 @@ metrics:
     - volume_correlation
 
   lesion_wise:
-    - lesion_recall
-    - lesion_precision
-    - lesion_f1
+    metrics:
+      - lesion_recall
+      - lesion_precision
+      - lesion_f1
     iou_threshold: 0.1  # IoU threshold for lesion-wise matching
 
   stratification:
