@@ -1,0 +1,1018 @@
+{
+  "model": "v1.0-unet3d-isles22-soop",
+  "checkpoint": "/kaggle/input/datasets/payzutdinmugutdinov/mri-stroke-model/best_model.pth",
+  "n_subjects": 50,
+  "overall": {
+    "dice_mean": 0.5665284125706003,
+    "dice_std": 0.2758085259711673,
+    "dice_median": 0.6292905509471893,
+    "iou_mean": 0.44188709842169743,
+    "hd95_mean": 19.12429363413833,
+    "hd95_std": 16.685298044080223,
+    "volume_mae_mean": 5.425391598713783,
+    "sensitivity_mean": 0.5836020598379317,
+    "lesion_f1_mean": 0.31082483626845003
+  },
+  "per_subject": [
+    {
+      "dice": 1.0638298020282377e-09,
+      "iou": 1.0638298020282377e-09,
+      "sensitivity": 0.0,
+      "specificity": 1.0,
+      "hd95": Infinity,
+      "volume_mae_ml": 0.752,
+      "pred_volume_ml": 0.0,
+      "gt_volume_ml": 0.752,
+      "lesion_f1": 0.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0008",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.6047297120094299,
+      "iou": 0.4334140419960022,
+      "sensitivity": 0.6845124282982792,
+      "specificity": 0.9997687370677845,
+      "hd95": 36.036083290515926,
+      "volume_mae_ml": 1.104,
+      "pred_volume_ml": 5.288,
+      "gt_volume_ml": 4.184,
+      "lesion_f1": 0.23076923076923073,
+      "lesion_precision": 0.6,
+      "lesion_recall": 0.14285714285714285,
+      "subject_id": "sub-strokecase0009",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.6666666865348816,
+      "iou": 0.5,
+      "sensitivity": 0.5629860031104199,
+      "specificity": 0.9998143324640832,
+      "hd95": 9.16515138991168,
+      "volume_mae_ml": 4.800000000000001,
+      "pred_volume_ml": 10.632,
+      "gt_volume_ml": 15.432,
+      "lesion_f1": 0.15384615384615385,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.08333333333333333,
+      "subject_id": "sub-strokecase0017",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.5416666865348816,
+      "iou": 0.37142857909202576,
+      "sensitivity": 0.4785276073619632,
+      "specificity": 0.9999641373858597,
+      "hd95": 9.143063441920422,
+      "volume_mae_ml": 0.30400000000000005,
+      "pred_volume_ml": 1.0,
+      "gt_volume_ml": 1.304,
+      "lesion_f1": 0.5,
+      "lesion_precision": 0.5,
+      "lesion_recall": 0.5,
+      "subject_id": "sub-strokecase0022",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.5114504098892212,
+      "iou": 0.34358975291252136,
+      "sensitivity": 1.0,
+      "specificity": 0.9999023387578558,
+      "hd95": 4.0,
+      "volume_mae_ml": 1.024,
+      "pred_volume_ml": 1.56,
+      "gt_volume_ml": 0.536,
+      "lesion_f1": 1.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0032",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.3688969314098358,
+      "iou": 0.2261640727519989,
+      "sensitivity": 0.6580645161290323,
+      "specificity": 0.9997741432130417,
+      "hd95": 18.973665961010276,
+      "volume_mae_ml": 1.9440000000000002,
+      "pred_volume_ml": 3.184,
+      "gt_volume_ml": 1.24,
+      "lesion_f1": 0.3333333333333333,
+      "lesion_precision": 0.3333333333333333,
+      "lesion_recall": 0.3333333333333333,
+      "subject_id": "sub-strokecase0034",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.6229074597358704,
+      "iou": 0.4523352384567261,
+      "sensitivity": 0.5327807083647325,
+      "specificity": 0.9998197638142253,
+      "hd95": 20.45463272265199,
+      "volume_mae_ml": 3.072,
+      "pred_volume_ml": 7.544,
+      "gt_volume_ml": 10.616,
+      "lesion_f1": 0.25,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.14285714285714285,
+      "subject_id": "sub-strokecase0040",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.7275518178939819,
+      "iou": 0.5717732310295105,
+      "sensitivity": 0.7258805513016845,
+      "specificity": 0.9998656557260048,
+      "hd95": 23.06446572110456,
+      "volume_mae_ml": 0.02400000000000002,
+      "pred_volume_ml": 5.2,
+      "gt_volume_ml": 5.224,
+      "lesion_f1": 0.16666666666666669,
+      "lesion_precision": 0.5,
+      "lesion_recall": 0.1,
+      "subject_id": "sub-strokecase0041",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.7594339847564697,
+      "iou": 0.6121672987937927,
+      "sensitivity": 0.8228279386712095,
+      "specificity": 0.9998458171803931,
+      "hd95": 4.47213595499958,
+      "volume_mae_ml": 0.7840000000000007,
+      "pred_volume_ml": 5.48,
+      "gt_volume_ml": 4.696,
+      "lesion_f1": 0.4444444444444445,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2857142857142857,
+      "subject_id": "sub-strokecase0042",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.21621622145175934,
+      "iou": 0.12121212482452393,
+      "sensitivity": 0.20833333333333334,
+      "specificity": 0.9999473533217765,
+      "hd95": 48.22652828101617,
+      "volume_mae_ml": 0.05600000000000005,
+      "pred_volume_ml": 0.712,
+      "gt_volume_ml": 0.768,
+      "lesion_f1": 0.6666666666666666,
+      "lesion_precision": 0.5,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0045",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.7921279072761536,
+      "iou": 0.655804455280304,
+      "sensitivity": 0.7815533980582524,
+      "specificity": 0.9999397088318166,
+      "hd95": 6.0,
+      "volume_mae_ml": 0.08799999999999963,
+      "pred_volume_ml": 3.208,
+      "gt_volume_ml": 3.296,
+      "lesion_f1": 0.2857142857142857,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.16666666666666666,
+      "subject_id": "sub-strokecase0054",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8406801223754883,
+      "iou": 0.725149393081665,
+      "sensitivity": 0.7887740029542097,
+      "specificity": 0.9997728202794234,
+      "hd95": 2.8284271247461903,
+      "volume_mae_ml": 3.3439999999999976,
+      "pred_volume_ml": 23.736,
+      "gt_volume_ml": 27.08,
+      "lesion_f1": 0.2857142857142857,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.16666666666666666,
+      "subject_id": "sub-strokecase0065",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.5200663208961487,
+      "iou": 0.351411908864975,
+      "sensitivity": 0.7716535433070866,
+      "specificity": 0.999072309468399,
+      "hd95": 24.413111231467404,
+      "volume_mae_ml": 7.864000000000001,
+      "pred_volume_ml": 15.992,
+      "gt_volume_ml": 8.128,
+      "lesion_f1": 0.4444444444444444,
+      "lesion_precision": 0.6666666666666666,
+      "lesion_recall": 0.3333333333333333,
+      "subject_id": "sub-strokecase0072",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8304457068443298,
+      "iou": 0.7100531458854675,
+      "sensitivity": 0.9779107517983322,
+      "specificity": 0.9954239770936308,
+      "hd95": 7.211102550927978,
+      "volume_mae_ml": 44.632000000000005,
+      "pred_volume_ml": 170.304,
+      "gt_volume_ml": 125.672,
+      "lesion_f1": 0.2222222222222222,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.125,
+      "subject_id": "sub-strokecase0081",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 0.650943398475647,
+      "iou": 0.4825174808502197,
+      "sensitivity": 0.5702479338842975,
+      "specificity": 0.9999832137824003,
+      "hd95": 4.0,
+      "volume_mae_ml": 0.24,
+      "pred_volume_ml": 0.728,
+      "gt_volume_ml": 0.968,
+      "lesion_f1": 1.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0082",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.7570558786392212,
+      "iou": 0.609082818031311,
+      "sensitivity": 0.7633928571428571,
+      "specificity": 0.9998266942734291,
+      "hd95": 2.8284271247461903,
+      "volume_mae_ml": 0.1200000000000001,
+      "pred_volume_ml": 7.288,
+      "gt_volume_ml": 7.168,
+      "lesion_f1": 0.6666666666666666,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.5,
+      "subject_id": "sub-strokecase0084",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8216560482978821,
+      "iou": 0.6972972750663757,
+      "sensitivity": 0.8580931263858093,
+      "specificity": 0.9999206269857563,
+      "hd95": 24.9030184603193,
+      "volume_mae_ml": 0.31999999999999984,
+      "pred_volume_ml": 3.928,
+      "gt_volume_ml": 3.608,
+      "lesion_f1": 0.18181818181818182,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.1,
+      "subject_id": "sub-strokecase0090",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8562666177749634,
+      "iou": 0.7486593127250671,
+      "sensitivity": 0.8732510288065843,
+      "specificity": 0.9992250765533919,
+      "hd95": 4.0,
+      "volume_mae_ml": 1.9279999999999973,
+      "pred_volume_ml": 50.528,
+      "gt_volume_ml": 48.6,
+      "lesion_f1": 0.04545454545454545,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.023255813953488372,
+      "subject_id": "sub-strokecase0091",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.4417910575866699,
+      "iou": 0.28352490067481995,
+      "sensitivity": 0.3252747252747253,
+      "specificity": 0.9998976950855467,
+      "hd95": 19.79898987322333,
+      "volume_mae_ml": 3.8400000000000003,
+      "pred_volume_ml": 3.44,
+      "gt_volume_ml": 7.28,
+      "lesion_f1": 0.24,
+      "lesion_precision": 0.75,
+      "lesion_recall": 0.14285714285714285,
+      "subject_id": "sub-strokecase0097",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8683871626853943,
+      "iou": 0.7673889398574829,
+      "sensitivity": 0.8750129762275511,
+      "specificity": 0.9989616374615994,
+      "hd95": 25.165700864470278,
+      "volume_mae_ml": 0.22509375000000098,
+      "pred_volume_ml": 14.975625,
+      "gt_volume_ml": 14.75053125,
+      "lesion_f1": 0.10526315789473684,
+      "lesion_precision": 0.0625,
+      "lesion_recall": 0.3333333333333333,
+      "subject_id": "sub-strokecase0101",
+      "spacing": [
+        0.875,
+        0.875,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.8210382461547852,
+      "iou": 0.6964078545570374,
+      "sensitivity": 0.777490297542044,
+      "specificity": 0.9999312949302529,
+      "hd95": 2.8284271247461903,
+      "volume_mae_ml": 0.6560000000000006,
+      "pred_volume_ml": 5.528,
+      "gt_volume_ml": 6.184,
+      "lesion_f1": 0.6666666666666666,
+      "lesion_precision": 0.5,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0106",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8551980257034302,
+      "iou": 0.7470270395278931,
+      "sensitivity": 0.8802547770700637,
+      "specificity": 0.998925449200611,
+      "hd95": 9.797958971132712,
+      "volume_mae_ml": 3.680000000000007,
+      "pred_volume_ml": 66.48,
+      "gt_volume_ml": 62.8,
+      "lesion_f1": 0.3636363636363636,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2222222222222222,
+      "subject_id": "sub-strokecase0113",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 6.66666677417993e-09,
+      "iou": 6.66666677417993e-09,
+      "sensitivity": 0.0,
+      "specificity": 1.0,
+      "hd95": Infinity,
+      "volume_mae_ml": 0.12,
+      "pred_volume_ml": 0.0,
+      "gt_volume_ml": 0.12,
+      "lesion_f1": 0.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0115",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.6421874761581421,
+      "iou": 0.47295743227005005,
+      "sensitivity": 0.9832535885167464,
+      "specificity": 0.9996558045397168,
+      "hd95": 6.0,
+      "volume_mae_ml": 3.552,
+      "pred_volume_ml": 6.896,
+      "gt_volume_ml": 3.344,
+      "lesion_f1": 1.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0124",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.08955223858356476,
+      "iou": 0.046875,
+      "sensitivity": 0.046875,
+      "specificity": 1.0,
+      "hd95": 49.66474709556215,
+      "volume_mae_ml": 0.976,
+      "pred_volume_ml": 0.048,
+      "gt_volume_ml": 1.024,
+      "lesion_f1": 0.0,
+      "lesion_precision": 0.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0128",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.45890411734580994,
+      "iou": 0.29777777194976807,
+      "sensitivity": 0.4962962962962963,
+      "specificity": 0.9999313283762594,
+      "hd95": 43.19210850928167,
+      "volume_mae_ml": 0.17599999999999993,
+      "pred_volume_ml": 1.256,
+      "gt_volume_ml": 1.08,
+      "lesion_f1": 0.4,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.25,
+      "subject_id": "sub-strokecase0129",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.5574572086334229,
+      "iou": 0.3864406645298004,
+      "sensitivity": 0.475,
+      "specificity": 0.9999580306452598,
+      "hd95": 44.96213472012675,
+      "volume_mae_ml": 0.5679999999999998,
+      "pred_volume_ml": 1.352,
+      "gt_volume_ml": 1.92,
+      "lesion_f1": 0.33333333333333337,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2,
+      "subject_id": "sub-strokecase0132",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.5531914830207825,
+      "iou": 0.38235294818878174,
+      "sensitivity": 0.9027777777777778,
+      "specificity": 0.9999252278262356,
+      "hd95": 3.9464101615137785,
+      "volume_mae_ml": 0.7280000000000001,
+      "pred_volume_ml": 1.304,
+      "gt_volume_ml": 0.576,
+      "lesion_f1": 0.6666666666666666,
+      "lesion_precision": 0.5,
+      "lesion_recall": 1.0,
+      "subject_id": "sub-strokecase0134",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.27642276883125305,
+      "iou": 0.1603773534297943,
+      "sensitivity": 0.2802197802197802,
+      "specificity": 0.999896225824814,
+      "hd95": 52.846946656715126,
+      "volume_mae_ml": 0.040000000000000036,
+      "pred_volume_ml": 1.496,
+      "gt_volume_ml": 1.456,
+      "lesion_f1": 0.4,
+      "lesion_precision": 0.2857142857142857,
+      "lesion_recall": 0.6666666666666666,
+      "subject_id": "sub-strokecase0135",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 7.874015883757579e-10,
+      "iou": 7.874015883757579e-10,
+      "sensitivity": 0.0,
+      "specificity": 0.9999221786914576,
+      "hd95": 48.92416081456474,
+      "volume_mae_ml": 0.6159999999999999,
+      "pred_volume_ml": 0.816,
+      "gt_volume_ml": 0.2,
+      "lesion_f1": 0.0,
+      "lesion_precision": 0.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0136",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 1.4285714833306429e-09,
+      "iou": 1.4285714833306429e-09,
+      "sensitivity": 0.0,
+      "specificity": 1.0,
+      "hd95": Infinity,
+      "volume_mae_ml": 0.56,
+      "pred_volume_ml": 0.0,
+      "gt_volume_ml": 0.56,
+      "lesion_f1": 0.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0139",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.38769763708114624,
+      "iou": 0.24046212434768677,
+      "sensitivity": 0.2532397713768321,
+      "specificity": 0.9992738094225354,
+      "hd95": 17.549928774784245,
+      "volume_mae_ml": 98.056,
+      "pred_volume_ml": 43.312,
+      "gt_volume_ml": 141.368,
+      "lesion_f1": 0.25000000000000006,
+      "lesion_precision": 0.18181818181818182,
+      "lesion_recall": 0.4,
+      "subject_id": "sub-strokecase0140",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 0.6356736421585083,
+      "iou": 0.4659248888492584,
+      "sensitivity": 0.5884074941451991,
+      "specificity": 0.999656993213202,
+      "hd95": 12.63270161883275,
+      "volume_mae_ml": 1.6007293412975194,
+      "pred_volume_ml": 9.163230166325175,
+      "gt_volume_ml": 10.763959507622694,
+      "lesion_f1": 0.06451612903225806,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.03333333333333333,
+      "subject_id": "sub-strokecase0165",
+      "spacing": [
+        1.1458333730697632,
+        1.1458333730697632,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.8183078765869141,
+      "iou": 0.6924882531166077,
+      "sensitivity": 0.9194805194805195,
+      "specificity": 0.9990343339429324,
+      "hd95": 7.623494984667466,
+      "volume_mae_ml": 14.754141211276874,
+      "pred_volume_ml": 74.42162405099953,
+      "gt_volume_ml": 59.66748283972265,
+      "lesion_f1": 0.10526315789473684,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.05555555555555555,
+      "subject_id": "sub-strokecase0166",
+      "spacing": [
+        1.796875,
+        1.796875,
+        4.800000190734863
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 0.8346105813980103,
+      "iou": 0.7161645293235779,
+      "sensitivity": 0.772703818369453,
+      "specificity": 0.9997658481042879,
+      "hd95": 8.329885794286437,
+      "volume_mae_ml": 4.599999999999998,
+      "pred_volume_ml": 26.408,
+      "gt_volume_ml": 31.008,
+      "lesion_f1": 0.2181818181818182,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.12244897959183673,
+      "subject_id": "sub-strokecase0171",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 9.009009094285148e-10,
+      "iou": 9.009009094285148e-10,
+      "sensitivity": 0.0,
+      "specificity": 0.9999977109930323,
+      "hd95": 54.14286065894575,
+      "volume_mae_ml": 0.84,
+      "pred_volume_ml": 0.024,
+      "gt_volume_ml": 0.864,
+      "lesion_f1": 0.0,
+      "lesion_precision": 0.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0174",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.7799353003501892,
+      "iou": 0.6392573118209839,
+      "sensitivity": 0.753125,
+      "specificity": 0.9997386919315403,
+      "hd95": 18.30198654043929,
+      "volume_mae_ml": 1.0559999999999992,
+      "pred_volume_ml": 14.304,
+      "gt_volume_ml": 15.36,
+      "lesion_f1": 0.07843137254901959,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.04081632653061224,
+      "subject_id": "sub-strokecase0178",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.4698275923728943,
+      "iou": 0.3070422410964966,
+      "sensitivity": 0.4554317548746518,
+      "specificity": 0.9997351149082215,
+      "hd95": 35.289102920026764,
+      "volume_mae_ml": 0.6819140895968303,
+      "pred_volume_ml": 10.445684008824173,
+      "gt_volume_ml": 11.127598098421004,
+      "lesion_f1": 0.08695652173913045,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.045454545454545456,
+      "subject_id": "sub-strokecase0186",
+      "spacing": [
+        1.796875,
+        1.796875,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.8325323462486267,
+      "iou": 0.71310955286026,
+      "sensitivity": 0.9406850459482038,
+      "specificity": 0.9997082907287616,
+      "hd95": 4.017934647069935,
+      "volume_mae_ml": 4.819892769650323,
+      "pred_volume_ml": 23.371055616182275,
+      "gt_volume_ml": 18.551162846531952,
+      "lesion_f1": 0.6666666666666666,
+      "lesion_precision": 0.6666666666666666,
+      "lesion_recall": 0.6666666666666666,
+      "subject_id": "sub-strokecase0192",
+      "spacing": [
+        1.796875,
+        1.796875,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.5726495981216431,
+      "iou": 0.401197612285614,
+      "sensitivity": 0.4962962962962963,
+      "specificity": 0.99997558342267,
+      "hd95": 42.0,
+      "volume_mae_ml": 0.28800000000000003,
+      "pred_volume_ml": 0.792,
+      "gt_volume_ml": 1.08,
+      "lesion_f1": 0.33333333333333337,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2,
+      "subject_id": "sub-strokecase0203",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.8622137308120728,
+      "iou": 0.7577993869781494,
+      "sensitivity": 0.830514705882353,
+      "specificity": 0.9998004587155963,
+      "hd95": 4.800000190734863,
+      "volume_mae_ml": 1.2604168041712782,
+      "pred_volume_ml": 15.881251732558074,
+      "gt_volume_ml": 17.14166853672935,
+      "lesion_f1": 0.3636363636363636,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2222222222222222,
+      "subject_id": "sub-strokecase0207",
+      "spacing": [
+        1.1458333730697632,
+        1.1458333730697632,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.7131300568580627,
+      "iou": 0.554158627986908,
+      "sensitivity": 0.7126865671641791,
+      "specificity": 0.9998244162221089,
+      "hd95": 6.097366596101013,
+      "volume_mae_ml": 0.008000000000000007,
+      "pred_volume_ml": 6.424,
+      "gt_volume_ml": 6.432,
+      "lesion_f1": 0.4444444444444445,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2857142857142857,
+      "subject_id": "sub-strokecase0213",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    },
+    {
+      "dice": 0.6016396880149841,
+      "iou": 0.4302465319633484,
+      "sensitivity": 0.46995073891625616,
+      "specificity": 0.9995692265239953,
+      "hd95": 8.246211251235321,
+      "volume_mae_ml": 21.328,
+      "pred_volume_ml": 27.392,
+      "gt_volume_ml": 48.72,
+      "lesion_f1": 0.3333333333333333,
+      "lesion_precision": 0.4,
+      "lesion_recall": 0.2857142857142857,
+      "subject_id": "sub-strokecase0217",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.8446608185768127,
+      "iou": 0.7310933470726013,
+      "sensitivity": 0.7862345856036708,
+      "specificity": 0.9989832094240635,
+      "hd95": 6.0,
+      "volume_mae_ml": 19.295999999999992,
+      "pred_volume_ml": 120.184,
+      "gt_volume_ml": 139.48,
+      "lesion_f1": 0.4444444444444445,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.2857142857142857,
+      "subject_id": "sub-strokecase0223",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 0.44387316703796387,
+      "iou": 0.2852422893047333,
+      "sensitivity": 0.3668555240793201,
+      "specificity": 0.9998458031746226,
+      "hd95": 52.273677645563374,
+      "volume_mae_ml": 3.797021635255078,
+      "pred_volume_ml": 7.144599893275881,
+      "gt_volume_ml": 10.941621528530959,
+      "lesion_f1": 0.15217391304347827,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.08235294117647059,
+      "subject_id": "sub-strokecase0228",
+      "spacing": [
+        1.796875,
+        1.796875,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 1.2500000146076218e-08,
+      "iou": 1.2500000146076218e-08,
+      "sensitivity": 0.0,
+      "specificity": 1.0,
+      "hd95": Infinity,
+      "volume_mae_ml": 0.064,
+      "pred_volume_ml": 0.0,
+      "gt_volume_ml": 0.064,
+      "lesion_f1": 0.0,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.0,
+      "subject_id": "sub-strokecase0233",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "tiny (<1 mL)"
+    },
+    {
+      "dice": 0.7657936811447144,
+      "iou": 0.620474636554718,
+      "sensitivity": 0.806030603060306,
+      "specificity": 0.9989826039826193,
+      "hd95": 12.826627570183849,
+      "volume_mae_ml": 2.943073237739931,
+      "pred_volume_ml": 30.949534626425677,
+      "gt_volume_ml": 28.006461388685747,
+      "lesion_f1": 0.10526315789473685,
+      "lesion_precision": 0.75,
+      "lesion_recall": 0.05660377358490566,
+      "subject_id": "sub-strokecase0236",
+      "spacing": [
+        1.1458333730697632,
+        1.1458333730697632,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.8691885471343994,
+      "iou": 0.7686414122581482,
+      "sensitivity": 0.8709872804360993,
+      "specificity": 0.9989860195231601,
+      "hd95": 4.898979485566356,
+      "volume_mae_ml": 0.32799999999998875,
+      "pred_volume_ml": 79.576,
+      "gt_volume_ml": 79.248,
+      "lesion_f1": 0.2222222222222222,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.125,
+      "subject_id": "sub-strokecase0237",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "large (>50 mL)"
+    },
+    {
+      "dice": 0.7274725437164307,
+      "iou": 0.5716753005981445,
+      "sensitivity": 0.6073394495412844,
+      "specificity": 0.999948076937761,
+      "hd95": 19.35406907101299,
+      "volume_mae_ml": 5.579297096701339,
+      "pred_volume_ml": 11.313574668311048,
+      "gt_volume_ml": 16.892871765012387,
+      "lesion_f1": 0.2857142857142857,
+      "lesion_precision": 1.0,
+      "lesion_recall": 0.16666666666666666,
+      "subject_id": "sub-strokecase0239",
+      "spacing": [
+        1.796875,
+        1.796875,
+        4.800000190734863
+      ],
+      "size_cat": "medium (10-50 mL)"
+    },
+    {
+      "dice": 0.5143221020698547,
+      "iou": 0.3461868166923523,
+      "sensitivity": 0.4488888888888889,
+      "specificity": 0.9997961551968972,
+      "hd95": 8.48528137423857,
+      "volume_mae_ml": 1.8319999999999999,
+      "pred_volume_ml": 5.368,
+      "gt_volume_ml": 7.2,
+      "lesion_f1": 0.3333333333333333,
+      "lesion_precision": 0.25,
+      "lesion_recall": 0.5,
+      "subject_id": "sub-strokecase0242",
+      "spacing": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "size_cat": "small (1-10 mL)"
+    }
+  ]
+}

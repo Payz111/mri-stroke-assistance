@@ -1,0 +1,20 @@
+{
+  "model": "attention_unet3d",
+  "features": [
+    32,
+    64,
+    128,
+    256
+  ],
+  "dropout": 0.1,
+  "loss": "dice_focal (0.4/0.6)",
+  "augmentation": "RandFlip(LR=0.5, AP=0.3) + GaussNoise(0.05) + Contrast(0.7-1.5)",
+  "amp": true,
+  "epochs_trained": 40,
+  "best_epoch": 30,
+  "best_val_dice": 0.7849261944110577,
+  "train_subjects": 1321,
+  "val_subjects": 50,
+  "batch_size": 4,
+  "lr": 0.0001
+}
