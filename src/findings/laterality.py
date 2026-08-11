@@ -1,4 +1,5 @@
 """Laterality detection -- determine which hemisphere(s) a lesion occupies."""
+
 from __future__ import annotations
 
 import numpy as np

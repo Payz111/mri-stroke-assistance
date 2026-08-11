@@ -8,6 +8,7 @@ Uses threshold-based approach (clinical standard):
 
 Follows the same plain-dict pattern as builder.py (no Pydantic runtime).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -116,9 +117,7 @@ def build_v2_findings(
         hypo_mask,
         spacing,
         core_max_ml=mismatch_cfg.get("core_max_ml", DEFAULT_CORE_MAX_ML),
-        mismatch_ratio_min=mismatch_cfg.get(
-            "mismatch_ratio_min", DEFAULT_MISMATCH_RATIO_MIN
-        ),
+        mismatch_ratio_min=mismatch_cfg.get("mismatch_ratio_min", DEFAULT_MISMATCH_RATIO_MIN),
         mismatch_volume_min_ml=mismatch_cfg.get(
             "mismatch_volume_min_ml", DEFAULT_MISMATCH_VOLUME_MIN_ML
         ),

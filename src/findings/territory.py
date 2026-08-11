@@ -4,6 +4,7 @@ Determines which arterial territory a lesion most likely belongs to
 (e.g. MCA, ACA, PCA, vertebrobasilar) using a heuristic based on
 lesion centroid position within the normalised volume.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -44,9 +45,7 @@ def classify_vascular_territory(
     return _heuristic_territory(mask)
 
 
-def _atlas_based_territory(
-    mask: np.ndarray, atlas: np.ndarray
-) -> tuple[str, float]:
+def _atlas_based_territory(mask: np.ndarray, atlas: np.ndarray) -> tuple[str, float]:
     """Classify using an integer-labelled vascular territory atlas."""
     labels = atlas[mask > 0]
     unique, counts = np.unique(labels, return_counts=True)

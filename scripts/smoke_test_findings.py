@@ -7,6 +7,7 @@ Can optionally load a trained checkpoint for real inference.
 Usage:
     python scripts/smoke_test_findings.py [--checkpoint PATH] [--fold 0]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -76,11 +77,13 @@ def _load_real_subject(fold: int = 0):
 
 def main():
     parser = argparse.ArgumentParser(description="Smoke test findings + report")
-    parser.add_argument("--checkpoint", type=str, default=None,
-                        help="Path to model checkpoint for real inference")
+    parser.add_argument(
+        "--checkpoint", type=str, default=None, help="Path to model checkpoint for real inference"
+    )
     parser.add_argument("--fold", type=int, default=0)
-    parser.add_argument("--synthetic", action="store_true",
-                        help="Use synthetic data (no dataset needed)")
+    parser.add_argument(
+        "--synthetic", action="store_true", help="Use synthetic data (no dataset needed)"
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -126,12 +129,14 @@ def main():
     print(f"  Confidence: {findings['overall_confidence']:.0%}")
 
     for lesion in findings["lesions"]:
-        print(f"  - Lesion {lesion['lesion_id']}: "
-              f"{lesion['volume_ml']} mL, "
-              f"{lesion['laterality']}, "
-              f"{lesion['vascular_territory']}, "
-              f"ADC low={lesion['adc_low_confirmed']}, "
-              f"mismatch={lesion['dwi_flair_mismatch']}")
+        print(
+            f"  - Lesion {lesion['lesion_id']}: "
+            f"{lesion['volume_ml']} mL, "
+            f"{lesion['laterality']}, "
+            f"{lesion['vascular_territory']}, "
+            f"ADC low={lesion['adc_low_confirmed']}, "
+            f"mismatch={lesion['dwi_flair_mismatch']}"
+        )
 
     # Step 3: Generate report
     print("\n[3/4] Generating report...")
@@ -165,7 +170,9 @@ def main():
         json.dump(validation, f, indent=2)
 
     print(f"\nOutputs saved to {output_dir}/")
-    print("\nSMOKE TEST PASSED!" if validation["valid"] else "\nSMOKE TEST: validation issues found")
+    print(
+        "\nSMOKE TEST PASSED!" if validation["valid"] else "\nSMOKE TEST: validation issues found"
+    )
     return 0 if validation["valid"] else 1
 
 

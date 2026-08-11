@@ -3,6 +3,7 @@
 Takes raw NIfTI volumes, preprocesses them, runs the segmentation model,
 applies post-processing, builds findings, and generates a report.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,7 +12,6 @@ from typing import Any
 import numpy as np
 import torch
 import yaml
-
 from scipy.ndimage import zoom
 
 from src.data.transforms import get_val_transforms
@@ -49,9 +49,7 @@ def load_model(
         config = full_config["model"]
 
     model = create_model(config)
-    checkpoint = torch.load(
-        checkpoint_path, map_location=device, weights_only=True
-    )
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     model.load_state_dict(checkpoint)
     model.to(device)
     model.eval()

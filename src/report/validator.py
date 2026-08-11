@@ -3,6 +3,7 @@
 Ensures the generated report text is consistent with the underlying
 findings data and flags potential hallucinations or omissions.
 """
+
 from __future__ import annotations
 
 import re
@@ -46,15 +47,11 @@ def validate_report(
     if n_lesions == 0:
         count_ok = "no acute" in text_lower or "no ischemic" in text_lower
         if not count_ok:
-            issues.append(
-                f"Report should indicate no lesions (found {n_lesions})"
-            )
+            issues.append(f"Report should indicate no lesions (found {n_lesions})")
     else:
         count_ok = str(n_lesions) in report_text
         if not count_ok:
-            issues.append(
-                f"Lesion count {n_lesions} not found in report text"
-            )
+            issues.append(f"Lesion count {n_lesions} not found in report text")
     checks["lesion_count"] = count_ok
 
     # Check 2: Total volume
@@ -72,10 +69,7 @@ def validate_report(
         lat = lesion.get("laterality", "")
         if lat and lat.lower() not in text_lower:
             lat_ok = False
-            issues.append(
-                f"Lesion {lesion.get('lesion_id')}: "
-                f"laterality '{lat}' not in report"
-            )
+            issues.append(f"Lesion {lesion.get('lesion_id')}: " f"laterality '{lat}' not in report")
     checks["laterality_mentioned"] = lat_ok
 
     # Check 4: Impression class
@@ -130,9 +124,7 @@ def validate_report(
         val = float(num)
         if val < 0.01 or num in allowed_numbers:
             continue
-        close_match = any(
-            abs(val - float(a)) < 0.15 for a in allowed_numbers if a
-        )
+        close_match = any(abs(val - float(a)) < 0.15 for a in allowed_numbers if a)
         if not close_match and val > 1.0:
             suspicious.append(num)
 

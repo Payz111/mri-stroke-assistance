@@ -3,12 +3,11 @@
 Implements a battery of automated checks that must pass before a subject
 is accepted into the training / inference pipeline.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-
-import numpy as np
 
 
 @dataclass

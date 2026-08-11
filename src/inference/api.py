@@ -5,6 +5,7 @@ Exposes endpoints:
 - GET  /health   — health check (model status, device)
 - GET  /         — API info
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,7 +19,6 @@ from typing import Any
 
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -28,8 +28,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 CHECKPOINT_PATH = os.environ.get(
     "CHECKPOINT_PATH",
-    str(Path(__file__).resolve().parent.parent.parent
-        / "outputs" / "fold_0" / "checkpoints" / "best_model.pth"),
+    str(
+        Path(__file__).resolve().parent.parent.parent
+        / "outputs"
+        / "fold_0"
+        / "checkpoints"
+        / "best_model.pth"
+    ),
 )
 DEVICE = os.environ.get("DEVICE", "cpu")
 MODEL_NAME = os.environ.get("MODEL_NAME", "attention_unet3d")
@@ -184,9 +189,7 @@ async def health():
     responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
 async def predict(
-    file: UploadFile = File(
-        ..., description="ZIP archive containing DWI, ADC, FLAIR NIfTI files"
-    ),
+    file: UploadFile = File(..., description="ZIP archive containing DWI, ADC, FLAIR NIfTI files"),
 ):
     """Run stroke lesion segmentation on uploaded MRI data.
 

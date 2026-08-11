@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -144,9 +145,13 @@ class Trainer:
             logger.info(
                 "Epoch %d/%d (%.1fs): train_loss=%.4f train_dice=%.4f | "
                 "val_loss=%.4f val_dice=%.4f",
-                epoch + 1, num_epochs, elapsed,
-                metrics["train_loss"], metrics["train_dice"],
-                metrics["val_loss"], metrics["val_dice"],
+                epoch + 1,
+                num_epochs,
+                elapsed,
+                metrics["train_loss"],
+                metrics["train_dice"],
+                metrics["val_loss"],
+                metrics["val_dice"],
             )
 
             if metrics["val_dice"] > best_val_dice:
@@ -167,7 +172,8 @@ class Trainer:
 
         logger.info(
             "Training complete. Best val_dice=%.4f at epoch %d",
-            best_val_dice, best_epoch + 1,
+            best_val_dice,
+            best_epoch + 1,
         )
 
         return {

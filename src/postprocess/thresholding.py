@@ -1,4 +1,5 @@
 """Probability-map thresholding for binary mask generation."""
+
 from __future__ import annotations
 
 import numpy as np

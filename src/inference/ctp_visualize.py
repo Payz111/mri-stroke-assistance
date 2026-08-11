@@ -2,6 +2,7 @@
 
 Creates overlays showing core (red) and penumbra (green) on NCCT/Tmax.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -52,7 +53,9 @@ def create_perfusion_overlay(
     penumbra_slice = penumbra_mask[:, :, slice_idx] > 0
 
     # Normalize background to [0, 255]
-    bg_min, bg_max = np.percentile(bg_slice[bg_slice > 0], [1, 99]) if (bg_slice > 0).any() else (0, 1)
+    bg_min, bg_max = (
+        np.percentile(bg_slice[bg_slice > 0], [1, 99]) if (bg_slice > 0).any() else (0, 1)
+    )
     bg_norm = np.clip((bg_slice - bg_min) / max(bg_max - bg_min, 1e-7) * 255, 0, 255)
     bg_uint8 = bg_norm.astype(np.uint8)
 
@@ -64,9 +67,9 @@ def create_perfusion_overlay(
         rgb[penumbra_slice, ch] = (
             (1 - alpha) * rgb[penumbra_slice, ch] + alpha * penumbra_color[ch]
         ).astype(np.uint8)
-        rgb[core_slice, ch] = (
-            (1 - alpha) * rgb[core_slice, ch] + alpha * core_color[ch]
-        ).astype(np.uint8)
+        rgb[core_slice, ch] = ((1 - alpha) * rgb[core_slice, ch] + alpha * core_color[ch]).astype(
+            np.uint8
+        )
 
     return Image.fromarray(rgb)
 
@@ -125,7 +128,9 @@ def create_perfusion_montage(
         # No pathology found, show middle slices
         mid = background.shape[2] // 2
         half = n_slices // 2
-        slice_indices = np.arange(max(0, mid - half), min(background.shape[2], mid + half + 1))[:n_slices]
+        slice_indices = np.arange(max(0, mid - half), min(background.shape[2], mid + half + 1))[
+            :n_slices
+        ]
 
     n_rows = 2 if tmax is not None else 1
     fig, axes = plt.subplots(n_rows, n_slices, figsize=(3 * n_slices, 3 * n_rows))
@@ -162,9 +167,12 @@ def create_perfusion_montage(
         if tmax is not None and n_rows > 1:
             ax2 = axes[1][col] if n_slices > 1 else axes[1]
             tmax_s = tmax[:, :, s_idx].astype(np.float32)
-            im = ax2.imshow(
-                tmax_s.T, cmap="hot", origin="lower",
-                vmin=0, vmax=20,
+            ax2.imshow(
+                tmax_s.T,
+                cmap="hot",
+                origin="lower",
+                vmin=0,
+                vmax=20,
             )
             ax2.set_title(f"Tmax z={s_idx}", fontsize=8)
             ax2.axis("off")

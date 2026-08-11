@@ -111,9 +111,7 @@ class SOOPDataset(Dataset):
             missing.append("mask")
 
         if missing:
-            raise FileNotFoundError(
-                f"Missing files for {subject_id}: {missing}"
-            )
+            raise FileNotFoundError(f"Missing files for {subject_id}: {missing}")
 
         result = {"dwi": dwi_path, "adc": adc_path, "flair": flair_path}
         if mask_path is not None:
@@ -141,6 +139,7 @@ class SOOPDataset(Dataset):
                 return self._load_subject(subject_id)
             except (EOFError, OSError, ValueError) as e:
                 import logging
+
                 logging.warning("Skipping %s: %s", subject_id, e)
                 continue
         raise RuntimeError(f"Could not load any subject starting from index {index}")
@@ -213,8 +212,7 @@ def get_stroke_subject_ids(data_root: str | Path) -> list[str]:
     stroke_ids = []
     for pid, info in participants.items():
         # Try multiple column name variants
-        for col in ("acuteischaemicstroke", "acuiteischaemicstroke",
-                     "acute_ischaemic_stroke"):
+        for col in ("acuteischaemicstroke", "acuiteischaemicstroke", "acute_ischaemic_stroke"):
             val = info.get(col, "").strip().lower()
             if val == "yes":
                 stroke_ids.append(pid)

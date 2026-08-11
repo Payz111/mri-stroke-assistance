@@ -1,8 +1,8 @@
 """Tests for V2 CTP perfusion analysis pipeline."""
+
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 
 def _make_synthetic_ctp(shape=(64, 64, 40)):
@@ -108,9 +108,7 @@ class TestThresholdMaps:
         core = np.zeros((64, 64, 40), dtype=np.float32)
         core[25:30, 25:30, 18:22] = 1.0  # small
 
-        result = compute_mismatch_metrics(
-            core, hypo, spacing=(1.0, 1.0, 1.0)
-        )
+        result = compute_mismatch_metrics(core, hypo, spacing=(1.0, 1.0, 1.0))
         assert result["target_mismatch_status"] == "target_mismatch"
         assert result["mismatch_ratio"] > 1.8
         assert result["mismatch_volume_ml"] > 15.0
@@ -122,9 +120,7 @@ class TestThresholdMaps:
         both = np.zeros((64, 64, 40), dtype=np.float32)
         both[20:30, 20:30, 15:25] = 1.0
 
-        result = compute_mismatch_metrics(
-            both, both, spacing=(1.0, 1.0, 1.0)
-        )
+        result = compute_mismatch_metrics(both, both, spacing=(1.0, 1.0, 1.0))
         assert result["target_mismatch_status"] == "no_mismatch"
         assert result["mismatch_ratio"] <= 1.8
 
@@ -153,9 +149,7 @@ class TestQC:
         tmax[:50] = np.nan  # 50% NaN
         cbf = np.full((100, 100, 100), 50.0, dtype=np.float32)
 
-        result = check_perfusion_quality(
-            {"tmax": tmax, "cbf": cbf}, max_nan_fraction=0.01
-        )
+        result = check_perfusion_quality({"tmax": tmax, "cbf": cbf}, max_nan_fraction=0.01)
         assert result["passed"] is False
 
 
@@ -174,7 +168,9 @@ class TestV2Builder:
         assert findings["core"]["volume_ml"] > 0
         assert findings["hypoperfusion"]["volume_ml"] > 0
         assert findings["mismatch"]["target_mismatch_status"] in (
-            "target_mismatch", "no_mismatch", "indeterminate"
+            "target_mismatch",
+            "no_mismatch",
+            "indeterminate",
         )
         assert "_masks" in findings  # internal masks for viz
 
@@ -214,14 +210,28 @@ class TestReportWithPerfusion:
                     "core_rcbf_threshold": 0.30,
                 },
                 "perfusion_quality_gate": {"passed": True, "reasons": []},
-                "core": {"volume_ml": 15.0, "mask_ref": "core.nii.gz", "method": "rCBF_threshold", "confidence": 0.8},
-                "hypoperfusion": {"volume_ml": 80.0, "mask_ref": "hypo.nii.gz", "method": "Tmax_threshold", "confidence": 0.8},
+                "core": {
+                    "volume_ml": 15.0,
+                    "mask_ref": "core.nii.gz",
+                    "method": "rCBF_threshold",
+                    "confidence": 0.8,
+                },
+                "hypoperfusion": {
+                    "volume_ml": 80.0,
+                    "mask_ref": "hypo.nii.gz",
+                    "method": "Tmax_threshold",
+                    "confidence": 0.8,
+                },
                 "penumbra": {"volume_ml": 65.0, "mask_ref": "penumbra.nii.gz"},
                 "mismatch": {
                     "mismatch_volume_ml": 65.0,
                     "mismatch_ratio": 5.3,
                     "target_mismatch_status": "target_mismatch",
-                    "criteria_used": {"core_max_ml": 70, "mismatch_ratio_min": 1.8, "mismatch_volume_min_ml": 15},
+                    "criteria_used": {
+                        "core_max_ml": 70,
+                        "mismatch_ratio_min": 1.8,
+                        "mismatch_volume_min_ml": 15,
+                    },
                     "confidence": 0.85,
                 },
             },
@@ -255,14 +265,28 @@ class TestReportWithPerfusion:
                 "maps_present": {"tmax": True, "cbf": True, "cbv": False, "mtt": False},
                 "thresholds_used": {"hypoperfusion_tmax_sec": 6.0, "core_rcbf_threshold": 0.30},
                 "perfusion_quality_gate": {"passed": True, "reasons": []},
-                "core": {"volume_ml": 10.0, "mask_ref": "c.nii.gz", "method": "rCBF", "confidence": 0.8},
-                "hypoperfusion": {"volume_ml": 50.0, "mask_ref": "h.nii.gz", "method": "Tmax", "confidence": 0.8},
+                "core": {
+                    "volume_ml": 10.0,
+                    "mask_ref": "c.nii.gz",
+                    "method": "rCBF",
+                    "confidence": 0.8,
+                },
+                "hypoperfusion": {
+                    "volume_ml": 50.0,
+                    "mask_ref": "h.nii.gz",
+                    "method": "Tmax",
+                    "confidence": 0.8,
+                },
                 "penumbra": {"volume_ml": 40.0, "mask_ref": "p.nii.gz"},
                 "mismatch": {
                     "mismatch_volume_ml": 40.0,
                     "mismatch_ratio": 5.0,
                     "target_mismatch_status": "target_mismatch",
-                    "criteria_used": {"core_max_ml": 70, "mismatch_ratio_min": 1.8, "mismatch_volume_min_ml": 15},
+                    "criteria_used": {
+                        "core_max_ml": 70,
+                        "mismatch_ratio_min": 1.8,
+                        "mismatch_volume_min_ml": 15,
+                    },
                     "confidence": 0.85,
                 },
             },

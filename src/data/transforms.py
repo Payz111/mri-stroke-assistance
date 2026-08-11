@@ -10,7 +10,6 @@ from scipy.ndimage import zoom
 
 from src.preprocess.intensity_norm import normalize_zscore
 
-
 # Keys used throughout the pipeline
 SPATIAL_KEYS = ["dwi", "adc", "flair", "mask"]
 IMAGE_KEYS = ["dwi", "adc", "flair"]
@@ -160,11 +159,13 @@ def get_val_transforms(config: dict[str, Any] | None = None) -> T.Compose:
     if config and "spatial_size" in config:
         spatial_size = tuple(config["spatial_size"])
 
-    return T.Compose([
-        ResampleToReference(reference_key="dwi"),
-        NormalizePerModality(keys=IMAGE_KEYS),
-        StackModalities(),
-        T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
-        T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
-        T.ToTensord(keys=["image", "label"]),
-    ])
+    return T.Compose(
+        [
+            ResampleToReference(reference_key="dwi"),
+            NormalizePerModality(keys=IMAGE_KEYS),
+            StackModalities(),
+            T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
+            T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
+            T.ToTensord(keys=["image", "label"]),
+        ]
+    )

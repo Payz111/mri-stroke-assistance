@@ -86,8 +86,14 @@ def main() -> None:
     else:
         device = "cpu"
 
-    logging.info("Config: fold=%d, epochs=%d, batch_size=%d, lr=%.1e, device=%s",
-                 fold, epochs, batch_size, lr, device)
+    logging.info(
+        "Config: fold=%d, epochs=%d, batch_size=%d, lr=%.1e, device=%s",
+        fold,
+        epochs,
+        batch_size,
+        lr,
+        device,
+    )
 
     # Paths
     data_root = project_root / cfg["paths"]["data_raw"] / "ISLES-2022"
@@ -147,7 +153,9 @@ def main() -> None:
 
     # Scheduler
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs, eta_min=1e-7,
+        optimizer,
+        T_max=epochs,
+        eta_min=1e-7,
     )
 
     # Callbacks
@@ -171,7 +179,9 @@ def main() -> None:
 
     # Train
     result = trainer.fit(num_epochs=epochs)
-    logging.info("Best val_dice=%.4f at epoch %d", result["best_val_dice"], result["best_epoch"] + 1)
+    logging.info(
+        "Best val_dice=%.4f at epoch %d", result["best_val_dice"], result["best_epoch"] + 1
+    )
 
 
 if __name__ == "__main__":

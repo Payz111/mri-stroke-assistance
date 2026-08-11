@@ -36,8 +36,10 @@ def main() -> None:
     print(f"   Subject: {sid}")
     for key in ["dwi", "adc", "flair", "mask"]:
         v = sample[key]
-        print(f"   {key:6s}: shape={v.shape}, dtype={v.dtype}, "
-              f"min={v.min():.2f}, max={v.max():.2f}, mean={v.mean():.2f}")
+        print(
+            f"   {key:6s}: shape={v.shape}, dtype={v.dtype}, "
+            f"min={v.min():.2f}, max={v.max():.2f}, mean={v.mean():.2f}"
+        )
     print(f"   spacing: {sample['metadata']['spacing']}")
     print(f"   original shape: {sample['metadata']['shape']}")
 
@@ -55,8 +57,10 @@ def main() -> None:
     print(f"   Subject: {sid}")
     for key in ["image", "label"]:
         v = sample_t[key]
-        print(f"   {key:6s}: shape={v.shape}, dtype={v.dtype}, "
-              f"min={v.min():.4f}, max={v.max():.4f}")
+        print(
+            f"   {key:6s}: shape={v.shape}, dtype={v.dtype}, "
+            f"min={v.min():.4f}, max={v.max():.4f}"
+        )
 
     # 3. Verify shapes
     img = sample_t["image"]
@@ -65,9 +69,9 @@ def main() -> None:
     assert img.shape[0] == 3, f"Expected 3 channels, got {img.shape[0]}"
     assert lbl.ndim == 4, f"Expected 4D label, got {lbl.ndim}D"
     assert lbl.shape[0] == 1, f"Expected 1 channel label, got {lbl.shape[0]}"
-    assert img.shape[1:] == lbl.shape[1:], (
-        f"Spatial mismatch: image {img.shape[1:]} vs label {lbl.shape[1:]}"
-    )
+    assert (
+        img.shape[1:] == lbl.shape[1:]
+    ), f"Spatial mismatch: image {img.shape[1:]} vs label {lbl.shape[1:]}"
 
     # 4. Check mask is binary
     unique_vals = np.unique(lbl)

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestQCPipeline:
     def test_missing_modality_fails(self):

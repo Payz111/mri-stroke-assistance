@@ -116,13 +116,18 @@ def main() -> None:
         metadata_list.append(raw_sample["metadata"])
 
         sid = raw_sample["metadata"]["subject_id"]
-        metrics = compute_all_metrics(pred_np, gt_np,
-                                      tuple(float(s) for s in raw_sample["metadata"]["spacing"]))
+        metrics = compute_all_metrics(
+            pred_np, gt_np, tuple(float(s) for s in raw_sample["metadata"]["spacing"])
+        )
         if (i + 1) % 10 == 0 or i == 0:
             logging.info(
                 "[%d/%d] %s: Dice=%.4f, HD95=%.2f, Vol MAE=%.2f ml",
-                i + 1, len(val_ds), sid,
-                metrics["dice"], metrics["hd95"], metrics["volume_mae_ml"],
+                i + 1,
+                len(val_ds),
+                sid,
+                metrics["dice"],
+                metrics["hd95"],
+                metrics["volume_mae_ml"],
             )
 
     # Stratified evaluation
@@ -137,7 +142,9 @@ def main() -> None:
     print(f"Dice:     {overall.get('dice_mean', 0):.4f} +/- {overall.get('dice_std', 0):.4f}")
     print(f"IoU:      {overall.get('iou_mean', 0):.4f} +/- {overall.get('iou_std', 0):.4f}")
     print(f"HD95:     {overall.get('hd95_mean', 0):.2f} +/- {overall.get('hd95_std', 0):.2f} mm")
-    print(f"Vol MAE:  {overall.get('volume_mae_ml_mean', 0):.2f} +/- {overall.get('volume_mae_ml_std', 0):.2f} ml")
+    vol_mae_mean = overall.get("volume_mae_ml_mean", 0)
+    vol_mae_std = overall.get("volume_mae_ml_std", 0)
+    print(f"Vol MAE:  {vol_mae_mean:.2f} +/- {vol_mae_std:.2f} ml")
     print(f"Lesion F1:{overall.get('lesion_f1_mean', 0):.4f}")
     print(f"Sensitivity: {overall.get('sensitivity_mean', 0):.4f}")
 
@@ -158,8 +165,7 @@ def main() -> None:
         "overall": results["overall"],
         "by_size": results["by_size"],
         "per_subject": [
-            {k: (float(v) if isinstance(v, (np.floating, float)) else v)
-             for k, v in s.items()}
+            {k: (float(v) if isinstance(v, (np.floating, float)) else v) for k, v in s.items()}
             for s in results["per_subject"]
         ],
     }

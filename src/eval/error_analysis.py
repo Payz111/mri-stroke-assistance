@@ -49,11 +49,13 @@ def categorize_errors(
         lesion_mask = gt_labels == i
         overlap = (lesion_mask & pred_bin).sum()
         if overlap == 0:
-            missed_lesions.append({
-                "gt_lesion_id": i,
-                "volume_ml": volume_ml(lesion_mask.astype(np.float32), spacing),
-                "voxels": int(lesion_mask.sum()),
-            })
+            missed_lesions.append(
+                {
+                    "gt_lesion_id": i,
+                    "volume_ml": volume_ml(lesion_mask.astype(np.float32), spacing),
+                    "voxels": int(lesion_mask.sum()),
+                }
+            )
 
     # Spurious lesions (FP lesions): pred lesions with no overlap with GT
     spurious_lesions = []
@@ -61,11 +63,13 @@ def categorize_errors(
         lesion_mask = pred_labels == i
         overlap = (lesion_mask & gt_bin).sum()
         if overlap == 0:
-            spurious_lesions.append({
-                "pred_lesion_id": i,
-                "volume_ml": volume_ml(lesion_mask.astype(np.float32), spacing),
-                "voxels": int(lesion_mask.sum()),
-            })
+            spurious_lesions.append(
+                {
+                    "pred_lesion_id": i,
+                    "volume_ml": volume_ml(lesion_mask.astype(np.float32), spacing),
+                    "voxels": int(lesion_mask.sum()),
+                }
+            )
 
     return {
         "fp_voxels": fp_voxels,

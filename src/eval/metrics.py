@@ -91,6 +91,7 @@ def hausdorff_95(
 def _erode(mask: np.ndarray) -> np.ndarray:
     """Simple binary erosion by 1 voxel (6-connected)."""
     from scipy.ndimage import binary_erosion
+
     return binary_erosion(mask, iterations=1)
 
 

@@ -6,7 +6,7 @@ well-optimised, and standard in medical imaging research.
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import torch
 import torch.nn as nn

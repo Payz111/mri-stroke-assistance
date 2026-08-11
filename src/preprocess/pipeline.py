@@ -138,8 +138,7 @@ def preprocess_dataset(
         subject_ids = split_data.get("train", []) + split_data.get("val", [])
     else:
         subject_ids = sorted(
-            p.name for p in data_root.iterdir()
-            if p.is_dir() and p.name.startswith("sub-")
+            p.name for p in data_root.iterdir() if p.is_dir() and p.name.startswith("sub-")
         )
 
     logger.info("Preprocessing %d subjects...", len(subject_ids))

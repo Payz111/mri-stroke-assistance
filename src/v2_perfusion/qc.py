@@ -1,4 +1,5 @@
 """CTP perfusion quality control checks."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -49,8 +50,7 @@ def check_perfusion_quality(
         nan_frac = np.isnan(arr).mean()
         if nan_frac > max_nan_fraction:
             reasons.append(
-                f"Map '{name}' has {nan_frac:.1%} NaN voxels "
-                f"(max {max_nan_fraction:.1%})"
+                f"Map '{name}' has {nan_frac:.1%} NaN voxels " f"(max {max_nan_fraction:.1%})"
             )
 
     # Check Tmax range
@@ -73,8 +73,6 @@ def check_perfusion_quality(
         cbf_valid = cbf[~np.isnan(cbf)]
         positive_frac = (cbf_valid > 0).mean() if len(cbf_valid) > 0 else 0
         if positive_frac < 0.1:
-            reasons.append(
-                f"CBF has only {positive_frac:.1%} positive voxels"
-            )
+            reasons.append(f"CBF has only {positive_frac:.1%} positive voxels")
 
     return {"passed": len(reasons) == 0, "reasons": reasons}

@@ -3,6 +3,7 @@
 Removes spurious lesion detections that do not exhibit the expected
 DWI-bright / ADC-dark signal pattern of acute ischaemia.
 """
+
 from __future__ import annotations
 
 from typing import Any

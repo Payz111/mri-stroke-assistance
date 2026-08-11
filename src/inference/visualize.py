@@ -2,6 +2,7 @@
 
 Creates overlay images showing DWI slices with predicted lesion masks.
 """
+
 from __future__ import annotations
 
 from io import BytesIO
@@ -50,6 +51,7 @@ def create_overlay_image(
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         from PIL import Image
@@ -115,6 +117,7 @@ def create_montage(
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         from PIL import Image

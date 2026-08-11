@@ -6,6 +6,7 @@ report string using the templates defined in :mod:`src.report.templates`.
 Key principle: ZERO hallucinations -- every sentence is deterministically
 produced from the structured JSON fields. No LLM generation.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -52,11 +53,13 @@ def generate_report(findings: dict[str, Any]) -> str:
     sections = []
 
     # Header
-    sections.append(HEADER_TEMPLATE.format(
-        study_id=findings.get("study_id", "unknown"),
-        model_version=findings.get("model_version", "unknown"),
-        timestamp=findings.get("timestamp", ""),
-    ))
+    sections.append(
+        HEADER_TEMPLATE.format(
+            study_id=findings.get("study_id", "unknown"),
+            model_version=findings.get("model_version", "unknown"),
+            timestamp=findings.get("timestamp", ""),
+        )
+    )
 
     # Quality gate warning
     qg = findings.get("quality_gate", {})
@@ -77,9 +80,9 @@ def generate_report(findings: dict[str, Any]) -> str:
         sequences.append("GRE/SWI")
     if protocol.get("tof_mra"):
         sequences.append("TOF-MRA")
-    sections.append(PROTOCOL_TEMPLATE.format(
-        sequences=", ".join(sequences) if sequences else "none documented"
-    ))
+    sections.append(
+        PROTOCOL_TEMPLATE.format(sequences=", ".join(sequences) if sequences else "none documented")
+    )
 
     # Findings
     lesions = findings.get("lesions", [])
@@ -87,10 +90,12 @@ def generate_report(findings: dict[str, Any]) -> str:
         sections.append(NO_LESION_FINDINGS)
     else:
         total_vol = findings.get("total_lesion_volume_ml", 0.0)
-        sections.append(LESION_SUMMARY_TEMPLATE.format(
-            n_lesions=len(lesions),
-            total_volume_ml=f"{total_vol:.1f}",
-        ))
+        sections.append(
+            LESION_SUMMARY_TEMPLATE.format(
+                n_lesions=len(lesions),
+                total_volume_ml=f"{total_vol:.1f}",
+            )
+        )
 
         for lesion in lesions:
             sections.append(_render_lesion(lesion))
@@ -108,7 +113,7 @@ def generate_report(findings: dict[str, Any]) -> str:
     impression_body = impression_text
     if lesions:
         vol_text = f"{findings.get('total_lesion_volume_ml', 0):.1f} mL"
-        lateralities = set(l.get("laterality", "") for l in lesions)
+        lateralities = {les.get("laterality", "") for les in lesions}
         lat_str = ", ".join(sorted(lateralities))
         impression_body += f", {lat_str}, total volume {vol_text}"
     impression_body += f" (confidence: {confidence:.0%})."
@@ -141,33 +146,41 @@ def _render_perfusion(perfusion: dict[str, Any]) -> str:
     maps = perfusion.get("maps_present", {})
     available = [k.upper() for k, v in maps.items() if v]
 
-    parts.append(PERFUSION_HEADER_TEMPLATE.format(
-        source=perfusion.get("perfusion_source", "CTP"),
-        maps_available=", ".join(available) if available else "none",
-        tmax_threshold=tmax_t,
-        rcbf_pct=int(rcbf_t * 100),
-    ))
+    parts.append(
+        PERFUSION_HEADER_TEMPLATE.format(
+            source=perfusion.get("perfusion_source", "CTP"),
+            maps_available=", ".join(available) if available else "none",
+            tmax_threshold=tmax_t,
+            rcbf_pct=int(rcbf_t * 100),
+        )
+    )
 
     # Core
     core = perfusion.get("core", {})
-    parts.append(PERFUSION_CORE_TEMPLATE.format(
-        rcbf_pct=int(rcbf_t * 100),
-        core_volume_ml=f"{core.get('volume_ml', 0):.1f}",
-    ))
+    parts.append(
+        PERFUSION_CORE_TEMPLATE.format(
+            rcbf_pct=int(rcbf_t * 100),
+            core_volume_ml=f"{core.get('volume_ml', 0):.1f}",
+        )
+    )
 
     # Hypoperfusion
     hypo = perfusion.get("hypoperfusion", {})
-    parts.append(PERFUSION_HYPOPERFUSION_TEMPLATE.format(
-        tmax_threshold=tmax_t,
-        hypo_volume_ml=f"{hypo.get('volume_ml', 0):.1f}",
-    ))
+    parts.append(
+        PERFUSION_HYPOPERFUSION_TEMPLATE.format(
+            tmax_threshold=tmax_t,
+            hypo_volume_ml=f"{hypo.get('volume_ml', 0):.1f}",
+        )
+    )
 
     # Penumbra
     penumbra = perfusion.get("penumbra", {})
     if penumbra:
-        parts.append(PERFUSION_PENUMBRA_TEMPLATE.format(
-            penumbra_volume_ml=f"{penumbra.get('volume_ml', 0):.1f}",
-        ))
+        parts.append(
+            PERFUSION_PENUMBRA_TEMPLATE.format(
+                penumbra_volume_ml=f"{penumbra.get('volume_ml', 0):.1f}",
+            )
+        )
 
     # Mismatch
     mismatch = perfusion.get("mismatch", {})
@@ -184,10 +197,12 @@ def _render_perfusion(perfusion: dict[str, Any]) -> str:
     else:
         status_text = status_template
 
-    parts.append(PERFUSION_MISMATCH_TEMPLATE.format(
-        ratio=mismatch.get("mismatch_ratio", 0),
-        status_text=status_text,
-    ))
+    parts.append(
+        PERFUSION_MISMATCH_TEMPLATE.format(
+            ratio=mismatch.get("mismatch_ratio", 0),
+            status_text=status_text,
+        )
+    )
 
     return "\n".join(parts)
 
@@ -219,9 +234,7 @@ def _render_lesion(lesion: dict[str, Any]) -> str:
     volume_ml = lesion.get("volume_ml", 0.0)
     max_diam = lesion.get("max_diameter_mm", 0.0)
 
-    laterality = LATERALITY_TEXT.get(
-        lesion.get("laterality", "bilateral"), "bilateral"
-    )
+    laterality = LATERALITY_TEXT.get(lesion.get("laterality", "bilateral"), "bilateral")
 
     locations = lesion.get("anatomic_location", ["multiple"])
     location = "/".join(locations)

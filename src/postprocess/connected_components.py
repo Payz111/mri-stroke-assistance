@@ -1,4 +1,5 @@
 """Connected-component analysis for lesion-mask refinement."""
+
 from __future__ import annotations
 
 import numpy as np

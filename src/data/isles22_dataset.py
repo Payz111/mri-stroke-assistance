@@ -8,7 +8,6 @@ from typing import Any
 
 import nibabel as nib
 import numpy as np
-import torch
 from torch.utils.data import Dataset
 
 
@@ -84,15 +83,17 @@ class ISLES22Dataset(Dataset):
         mask = _find_nifti(deriv_path, "msk")
 
         missing = []
-        if dwi is None: missing.append("DWI")
-        if adc is None: missing.append("ADC")
-        if flair is None: missing.append("FLAIR")
-        if mask is None: missing.append("mask")
+        if dwi is None:
+            missing.append("DWI")
+        if adc is None:
+            missing.append("ADC")
+        if flair is None:
+            missing.append("FLAIR")
+        if mask is None:
+            missing.append("mask")
 
         if missing:
-            raise FileNotFoundError(
-                f"Missing files for {subject_id}: {missing}"
-            )
+            raise FileNotFoundError(f"Missing files for {subject_id}: {missing}")
 
         return {"dwi": dwi, "adc": adc, "flair": flair, "mask": mask}
 

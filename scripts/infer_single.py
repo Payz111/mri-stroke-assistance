@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    args = parse_args()
+    parse_args()
     raise NotImplementedError("Inference pipeline not yet implemented")
 
 

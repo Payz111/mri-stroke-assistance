@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -65,7 +64,7 @@ class QualityGate(BaseModel):
 
 
 class EvidenceSlices(BaseModel):
-    series_uid: Optional[str] = None
+    series_uid: str | None = None
     slice_indices: list[int] = Field(default_factory=list)
 
 

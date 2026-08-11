@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 import torch
 import torch.nn as nn
@@ -38,10 +37,7 @@ class CheckpointCallback:
         if value is None:
             return
 
-        improved = (
-            (value > self.best_value) if self.mode == "max"
-            else (value < self.best_value)
-        )
+        improved = (value > self.best_value) if self.mode == "max" else (value < self.best_value)
 
         if improved:
             self.best_value = value
@@ -50,7 +46,10 @@ class CheckpointCallback:
             torch.save(model.state_dict(), path)
             logger.info(
                 "Checkpoint saved: epoch=%d, %s=%.4f -> %s",
-                epoch, self.monitor, value, path,
+                epoch,
+                self.monitor,
+                value,
+                path,
             )
 
 
@@ -90,7 +89,8 @@ class EarlyStoppingCallback:
         if self.counter >= self.patience:
             logger.info(
                 "Early stopping at epoch %d: no improvement for %d epochs",
-                epoch, self.patience,
+                epoch,
+                self.patience,
             )
             return True
 

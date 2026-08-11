@@ -6,6 +6,7 @@ Clinical standard approach for CTP:
 - Penumbra (tissue at risk): hypoperfusion minus core
 - Target mismatch: criteria for reperfusion therapy eligibility
 """
+
 from __future__ import annotations
 
 import numpy as np

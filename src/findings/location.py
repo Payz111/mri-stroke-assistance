@@ -4,10 +4,10 @@ Maps segmented lesion voxels to named brain regions using a heuristic
 based on the lesion centroid position within the normalised volume.
 Without a registered atlas, this provides a rough but deterministic estimate.
 """
+
 from __future__ import annotations
 
 import numpy as np
-
 
 # Relative depth zones along the Z axis (inferior -> superior)
 # Values are fractions of total depth [0..1]

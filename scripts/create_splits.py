@@ -42,14 +42,14 @@ def create_splits(
         n_nan = df["size_category"].isna().sum()
         nan_cases = df[df["size_category"].isna()]["subject_id"].tolist()
         print(f"\nWarning: {n_nan} cases with NaN size_category (0 volume): {nan_cases}")
-        print(f"  Assigning to 'tiny (<1ml)' category for stratification")
+        print("  Assigning to 'tiny (<1ml)' category for stratification")
         df["size_category"] = df["size_category"].fillna("tiny (<1ml)")
 
     # Stratification variable
     stratify_var = df["size_category"].values
     subject_ids = df["subject_id"].values
 
-    print(f"\nStratification distribution:")
+    print("\nStratification distribution:")
     print(df["size_category"].value_counts().sort_index())
 
     # Create splits
@@ -73,7 +73,9 @@ def create_splits(
         with open(output_file, "w") as f:
             json.dump(split_data, f, indent=2)
 
-        print(f"\nFold {fold_idx}: {len(train_ids)} train, {len(val_ids)} val -> {output_file.name}")
+        print(
+            f"\nFold {fold_idx}: {len(train_ids)} train, {len(val_ids)} val -> {output_file.name}"
+        )
 
         # Show stratification balance in validation set
         val_df = df[df["subject_id"].isin(val_ids)]

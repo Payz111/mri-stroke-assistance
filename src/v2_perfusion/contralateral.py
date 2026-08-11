@@ -1,4 +1,5 @@
 """Contralateral CBF estimation for rCBF computation."""
+
 from __future__ import annotations
 
 import numpy as np

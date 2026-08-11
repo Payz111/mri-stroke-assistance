@@ -3,6 +3,7 @@
 Threshold-based analysis (no deep learning model needed):
 Tmax + CBF -> core/penumbra/mismatch -> findings -> report.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -90,9 +91,9 @@ def run_ctp_inference(
     findings = {
         "study_id": metadata.get("subject_id", "unknown"),
         "model_version": "v2.0-ctp-threshold",
-        "timestamp": __import__("datetime").datetime.now(
-            __import__("datetime").timezone.utc
-        ).isoformat(),
+        "timestamp": __import__("datetime")
+        .datetime.now(__import__("datetime").timezone.utc)
+        .isoformat(),
         "protocol_present": {
             "dwi": False,
             "adc": False,

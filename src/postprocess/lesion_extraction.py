@@ -1,4 +1,5 @@
 """Per-lesion statistics extraction from a segmented mask."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -5,6 +5,7 @@ anatomic-location mapping, vascular-territory classification, and
 DWI-FLAIR mismatch detection into a single structured findings
 dictionary. Optionally validates with the Pydantic schema.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -25,9 +26,17 @@ MODEL_VERSION = "v1.0-unet3d-isles22"
 _VALID_LATERALITIES = {"left", "right", "bilateral"}
 _VALID_TERRITORIES = {"MCA", "ACA", "PCA", "vertebrobasilar", "watershed", "uncertain"}
 _VALID_LOCATIONS = {
-    "frontal", "parietal", "temporal", "occipital", "insula",
-    "basal_ganglia", "thalamus", "internal_capsule", "brainstem",
-    "cerebellum", "multiple",
+    "frontal",
+    "parietal",
+    "temporal",
+    "occipital",
+    "insula",
+    "basal_ganglia",
+    "thalamus",
+    "internal_capsule",
+    "brainstem",
+    "cerebellum",
+    "multiple",
 }
 _VALID_FLAIR = {"none", "subtle", "definite"}
 _VALID_MISMATCH = {"yes", "no", "indeterminate"}
@@ -48,9 +57,7 @@ def _clamp_enum(value: str, valid: set[str], default: str) -> str:
     return value if value in valid else default
 
 
-def _classify_flair_signal(
-    flair: np.ndarray, lesion_mask: np.ndarray
-) -> tuple[str, float]:
+def _classify_flair_signal(flair: np.ndarray, lesion_mask: np.ndarray) -> tuple[str, float]:
     """Determine FLAIR hyperintensity within the lesion."""
     if lesion_mask.sum() == 0:
         return ("none", 0.0)
@@ -73,9 +80,7 @@ def _classify_flair_signal(
     return ("none", max(1.0 - lesion_z / 2.0, 0.0))
 
 
-def _check_adc_low(
-    adc: np.ndarray, lesion_mask: np.ndarray
-) -> tuple[bool, float]:
+def _check_adc_low(adc: np.ndarray, lesion_mask: np.ndarray) -> tuple[bool, float]:
     """Check if ADC is reduced within the lesion (acute ischemia sign)."""
     if lesion_mask.sum() == 0:
         return (False, 0.0)
@@ -120,9 +125,9 @@ def _determine_impression(
     if not lesions:
         return ("no_acute_infarct", 0.8)
 
-    has_adc_low = any(l.get("adc_low_confirmed") for l in lesions)
-    has_mismatch_yes = any(l.get("dwi_flair_mismatch") == "yes" for l in lesions)
-    has_mismatch_no = any(l.get("dwi_flair_mismatch") == "no" for l in lesions)
+    has_adc_low = any(les.get("adc_low_confirmed") for les in lesions)
+    has_mismatch_yes = any(les.get("dwi_flair_mismatch") == "yes" for les in lesions)
+    has_mismatch_no = any(les.get("dwi_flair_mismatch") == "no" for les in lesions)
 
     if has_adc_low and has_mismatch_yes:
         return ("acute", 0.80)
@@ -180,9 +185,7 @@ def build_findings(
         lat = detect_laterality(lmask)
         locations = map_anatomic_location(lmask)
         territory, terr_conf = classify_vascular_territory(lmask)
-        mismatch_status, mismatch_score = detect_dwi_flair_mismatch(
-            dwi, flair, lmask
-        )
+        mismatch_status, mismatch_score = detect_dwi_flair_mismatch(dwi, flair, lmask)
         flair_signal, flair_conf = _classify_flair_signal(flair, lmask)
         adc_low, adc_conf = _check_adc_low(adc, lmask)
         evidence = _find_evidence_slices(lmask)
@@ -197,15 +200,11 @@ def build_findings(
                 _clamp_enum(loc, _VALID_LOCATIONS, "multiple")
                 for loc in (locations or ["multiple"])
             ],
-            "vascular_territory": _clamp_enum(
-                territory, _VALID_TERRITORIES, "uncertain"
-            ),
+            "vascular_territory": _clamp_enum(territory, _VALID_TERRITORIES, "uncertain"),
             "territory_confidence": round(terr_conf, 2),
             "adc_low_confirmed": adc_low,
             "adc_confidence": round(adc_conf, 2),
-            "flair_hyperintensity": _clamp_enum(
-                flair_signal, _VALID_FLAIR, "none"
-            ),
+            "flair_hyperintensity": _clamp_enum(flair_signal, _VALID_FLAIR, "none"),
             "flair_confidence": round(flair_conf, 2),
             "dwi_flair_mismatch": _clamp_enum(
                 _map_mismatch_status(mismatch_status),
@@ -238,9 +237,7 @@ def build_findings(
         "lesions": lesions,
         "total_lesion_count": len(lesions),
         "total_lesion_volume_ml": round(total_volume, 2),
-        "overall_impression": _clamp_enum(
-            impression, _VALID_IMPRESSIONS, "indeterminate"
-        ),
+        "overall_impression": _clamp_enum(impression, _VALID_IMPRESSIONS, "indeterminate"),
         "overall_confidence": round(impression_conf, 2),
         "combined_mask_ref": f"{subject_id}_combined_mask.nii.gz",
     }

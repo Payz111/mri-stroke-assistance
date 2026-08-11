@@ -6,7 +6,7 @@ to help the model focus on small lesion regions.
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import torch
 import torch.nn as nn

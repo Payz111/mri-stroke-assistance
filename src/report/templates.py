@@ -6,6 +6,7 @@ structured findings into human-readable radiology-style prose.
 Key principle: ZERO hallucinations -- every sentence is directly
 derived from structured JSON fields. No free-text generation.
 """
+
 from __future__ import annotations
 
 HEADER_TEMPLATE = """\
@@ -118,9 +119,7 @@ TARGET_MISMATCH_TEXT = {
         "mismatch >{vol_min}mL)."
     ),
     "no_mismatch": "No target mismatch identified.",
-    "indeterminate": (
-        "Mismatch assessment indeterminate, clinical correlation required."
-    ),
+    "indeterminate": ("Mismatch assessment indeterminate, clinical correlation required."),
 }
 
 PERFUSION_IMPRESSION_TEMPLATE = """\
