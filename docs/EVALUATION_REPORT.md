@@ -29,6 +29,19 @@
 | Lesion F1 (mean) | 0.503 |
 | Training val_dice (batch-avg) | 0.785 |
 
+### Reproducing these numbers
+
+```bash
+python scripts/evaluate.py \
+    --checkpoint Training_results/Train_03_27_2026/checkpoints/best_model.pth \
+    --config configs/experiment/attention_aug.yaml \
+    --fold 0 --device cpu
+```
+
+TTA (L-R flip) and small-component filtering (<10 voxels) are enabled by default,
+matching the configuration used to produce the table above. Pass `--no-tta` and
+`--min-component-size 0` to measure the raw model output instead.
+
 > **Note on Dice discrepancy:** Training reports batch-averaged val_dice=0.785, which
 > weights each batch equally. Per-subject evaluation (mean=0.691) weights each subject
 > equally, so tiny lesions with low Dice pull down the average significantly.

@@ -2,7 +2,10 @@
 
 AI-powered assistant for ischemic stroke detection and characterization on brain MRI.
 
-**[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** — try the full pipeline in your browser (no setup needed).
+**[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** — the
+*Synthetic Demo* button runs the findings → report → validation chain in your browser with no
+setup. Segmentation of your own uploads additionally requires the trained checkpoint to be
+present in the Space (see [Deployment](#deployment)).
 
 Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured findings (JSON) -> draft radiology report**.
 
@@ -20,6 +23,14 @@ Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured fin
 | Training data | ISLES 2022 + SOOP | 1321 cases combined |
 
 **By lesion size:** Tiny 0.38 | Small 0.71 | Medium 0.82 | Large 0.83 (Dice mean)
+
+> **How to read these numbers.** They come from the **validation split of fold 0**
+> (50 ISLES 2022 subjects), with TTA and small-component filtering applied — not from a
+> held-out test set, and not averaged over all 5 folds. Only fold 0 has been trained so
+> far, so there is no cross-fold variance estimate yet. They are therefore **not directly
+> comparable** to ISLES 2022 challenge leaderboard scores, which are computed on a hidden
+> test set. Reproduce with:
+> `python scripts/evaluate.py --checkpoint <ckpt> --config configs/experiment/attention_aug.yaml`
 
 See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for detailed stratified analysis.
 
@@ -122,12 +133,32 @@ python demo/app.py
 # 2. Train (GPU recommended, see notebooks/ for Kaggle notebooks)
 python scripts/train.py --fold 0 --epochs 50 --device cuda
 
-# 3. Evaluate
-python scripts/evaluate.py --checkpoint outputs/fold_0/checkpoints/best_model.pth --fold 0
+# 3. Evaluate (TTA + small-component filtering are on by default)
+python scripts/evaluate.py \
+    --checkpoint outputs/fold_0/checkpoints/best_model.pth \
+    --config configs/experiment/attention_aug.yaml \
+    --fold 0
 
 # 4. Test findings + report pipeline
 python scripts/smoke_test_findings.py --synthetic
 ```
+
+### Run on a single case
+
+```bash
+python scripts/infer_single.py \
+    --input data/raw/isles22/ISLES-2022/sub-strokecase0001 \
+    --output outputs/case0001 \
+    --checkpoint outputs/fold_0/checkpoints/best_model.pth \
+    --model-config configs/experiment/attention_aug.yaml
+```
+
+Writes `prediction_mask.nii.gz`, `findings.json` and `report.txt`.
+
+> **Checkpoint / architecture must match.** `configs/default.yaml` describes the plain
+> `unet3d` baseline. The published checkpoint is an **Attention U-Net**, so pass
+> `--config` / `--model-config configs/experiment/attention_aug.yaml` when loading it,
+> otherwise `load_state_dict` will fail.
 
 For combined training with SOOP dataset, see `notebooks/03_kaggle_combined_training.ipynb`.
 
@@ -136,7 +167,7 @@ For combined training with SOOP dataset, see `notebooks/03_kaggle_combined_train
 ```
 MRI BRAIN - STROKE PROTOCOL
 Study ID: sub-strokecase0042
-Model: v1.0-unet3d-isles22
+Model: v2.0-attention-unet3d-isles22-soop
 
 TECHNIQUE:
 MRI brain with stroke protocol. Sequences available: DWI, ADC, FLAIR.
@@ -167,13 +198,13 @@ ISLES 2022 key statistics:
 
 ## Design Principles
 
-| Principle | Implementation |
-|-----------|---------------|
-| **Zero hallucinations** | Report text generated ONLY from structured JSON findings |
-| **Human-in-the-loop** | Physician always makes the final decision |
-| **Evidence-linked** | Every claim tied to a mask and slice indices |
-| **Fail-safe** | QC gate: poor quality input -> no prediction |
-| **Reproducible** | Fixed seeds, 5-fold CV, YAML configs |
+| Principle | Status |
+|-----------|--------|
+| **Zero hallucinations** | Implemented — report text generated ONLY from structured JSON findings, then cross-checked by [validator.py](src/report/validator.py) |
+| **Human-in-the-loop** | By design — the tool outputs a *draft*; the physician decides |
+| **Evidence-linked** | Implemented — every lesion carries a mask ref and slice indices |
+| **Reproducible** | Partial — fixed seeds, YAML configs, 5-fold splits generated; only fold 0 trained so far |
+| **Fail-safe** | **Not implemented** — [qc_pipeline.py](src/qc/qc_pipeline.py) is a specified-but-empty stub; there is currently no QC gate rejecting poor-quality input |
 
 ## Deployment
 
@@ -208,11 +239,14 @@ bash scripts/deploy_hf.sh <your-hf-username> [checkpoint-path]
 
 - **Deep Learning:** PyTorch, MONAI
 - **Medical Imaging:** nibabel, SimpleITK, scipy
-- **Training:** AdamW, CosineAnnealingLR, DiceFocalLoss
+- **Training:** AdamW, CosineAnnealingLR, DiceFocalLoss, AMP
 - **Evaluation:** Dice, IoU, HD95, lesion-wise F1, stratified by size
 - **Serving:** FastAPI (REST API), Gradio (web demo), Docker
 - **Deployment:** HuggingFace Spaces, Docker Compose
-- **Config:** YAML (Hydra-ready)
+- **Config:** plain YAML + argparse
+
+> Experiment tracking (MLflow) and Hydra config composition were planned but are
+> **not wired up** — training reads YAML directly and writes `training_history.json`.
 
 ## License
 
