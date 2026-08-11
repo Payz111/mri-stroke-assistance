@@ -1,5 +1,9 @@
 # MRI Stroke Assist
 
+[![CI](https://github.com/Payz111/mri-stroke-assistance/actions/workflows/ci.yml/badge.svg)](https://github.com/Payz111/mri-stroke-assistance/actions/workflows/ci.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 AI-powered assistant for ischemic stroke detection and characterization on brain MRI.
 
 **[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** — the
@@ -110,7 +114,7 @@ data/splits/     5-fold cross-validation splits
 ### Installation
 
 ```bash
-git clone git@gitlab.com:Payz111/mri-stroke-assistance.git
+git clone https://github.com/Payz111/mri-stroke-assistance.git
 cd mri-stroke-assistance
 pip install -e ".[dev]"
 ```

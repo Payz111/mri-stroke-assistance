@@ -252,7 +252,7 @@ Status: IN PROGRESS
 5. **V2**: + CTP perfusion → core/penumbra/mismatch
 6. **Главный принцип**: 0 галлюцинаций — текст только из structured JSON
 7. **Рабочая среда**: Windows 11, Claude Code (CLI), VS Code
-8. **Репозиторий**: `c:\Users\mfayz\MRI Stroke Assistance`
+8. **Репозиторий**: локальный клон `mri-stroke-assistance` (путь берётся из рабочей директории сессии)
 
 ---
 
