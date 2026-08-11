@@ -56,6 +56,12 @@ cp -r "${PROJECT_ROOT}/src" .
 cp -r "${PROJECT_ROOT}/configs" .
 cp -r "${PROJECT_ROOT}/demo" .
 
+# cp -r drags along compiled bytecode; it is useless in the Space and clutters
+# the file listing that visitors see.
+echo ">>> Removing __pycache__ and .pyc files..."
+find . -path ./.git -prune -o -name "__pycache__" -type d -print0 | xargs -0 rm -rf 2>/dev/null || true
+find . -path ./.git -prune -o -name "*.pyc" -type f -print0 | xargs -0 rm -f 2>/dev/null || true
+
 # Copy checkpoint if provided
 if [ -n "${CHECKPOINT}" ] && [ -f "${PROJECT_ROOT}/${CHECKPOINT}" ]; then
     echo ">>> Copying checkpoint: ${CHECKPOINT}"

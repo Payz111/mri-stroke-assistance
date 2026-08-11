@@ -6,10 +6,10 @@
 
 AI-powered assistant for ischemic stroke detection and characterization on brain MRI.
 
-**[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** — the
-*Synthetic Demo* button runs the findings → report → validation chain in your browser with no
-setup. Segmentation of your own uploads additionally requires the trained checkpoint to be
-present in the Space (see [Deployment](#deployment)).
+**[Live Demo on HuggingFace Spaces](https://huggingface.co/spaces/Paizutdin/mri-stroke-assist)** —
+runs the released Attention U-Net on CPU. Upload your own DWI/ADC/FLAIR NIfTI files to get a
+mask, structured findings and a draft report, or press *Synthetic Demo* to see the
+findings → report → validation chain with no data of your own.
 
 Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured findings (JSON) -> draft radiology report**.
 
