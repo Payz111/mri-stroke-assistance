@@ -20,7 +20,7 @@ from src.findings.mismatch import detect_dwi_flair_mismatch
 from src.findings.territory import classify_vascular_territory
 from src.findings.volume_calc import compute_max_diameter_mm, compute_volume_ml
 
-MODEL_VERSION = "v1.0-unet3d-isles22"
+MODEL_VERSION = "v2.0-attention-unet3d-isles22-soop"
 
 # Valid enum values (matching schema.py)
 _VALID_LATERALITIES = {"left", "right", "bilateral"}
@@ -101,6 +101,15 @@ def _check_adc_low(adc: np.ndarray, lesion_mask: np.ndarray) -> tuple[bool, floa
     if z_below > 1.5:
         return (True, min(z_below / 3.0, 1.0))
     return (False, max(0.0, z_below / 3.0))
+
+
+def _round(value: Any, digits: int) -> float:
+    """Round *value* and coerce numpy scalars to a JSON-serialisable float.
+
+    The extractors return numpy float32 scalars, which ``json.dumps`` cannot
+    encode -- keep the findings dict pure-Python so it serialises as numbers.
+    """
+    return round(float(value), digits)
 
 
 def _find_evidence_slices(mask: np.ndarray, top_k: int = 3) -> list[int]:
@@ -193,25 +202,25 @@ def build_findings(
         lesion = {
             "lesion_id": idx + 1,
             "mask_ref": f"lesion_{idx + 1}_mask.nii.gz",
-            "volume_ml": round(vol_ml, 2),
-            "max_diameter_mm": round(max_diam, 1),
+            "volume_ml": _round(vol_ml, 2),
+            "max_diameter_mm": _round(max_diam, 1),
             "laterality": _clamp_enum(lat, _VALID_LATERALITIES, "bilateral"),
             "anatomic_location": [
                 _clamp_enum(loc, _VALID_LOCATIONS, "multiple")
                 for loc in (locations or ["multiple"])
             ],
             "vascular_territory": _clamp_enum(territory, _VALID_TERRITORIES, "uncertain"),
-            "territory_confidence": round(terr_conf, 2),
-            "adc_low_confirmed": adc_low,
-            "adc_confidence": round(adc_conf, 2),
+            "territory_confidence": _round(terr_conf, 2),
+            "adc_low_confirmed": bool(adc_low),
+            "adc_confidence": _round(adc_conf, 2),
             "flair_hyperintensity": _clamp_enum(flair_signal, _VALID_FLAIR, "none"),
-            "flair_confidence": round(flair_conf, 2),
+            "flair_confidence": _round(flair_conf, 2),
             "dwi_flair_mismatch": _clamp_enum(
                 _map_mismatch_status(mismatch_status),
                 _VALID_MISMATCH,
                 "indeterminate",
             ),
-            "mismatch_confidence": round(mismatch_score, 2),
+            "mismatch_confidence": _round(mismatch_score, 2),
             "evidence_slices": {
                 "series_uid": None,
                 "slice_indices": evidence,
@@ -236,9 +245,9 @@ def build_findings(
         "quality_gate": {"passed": True, "reasons": []},
         "lesions": lesions,
         "total_lesion_count": len(lesions),
-        "total_lesion_volume_ml": round(total_volume, 2),
+        "total_lesion_volume_ml": _round(total_volume, 2),
         "overall_impression": _clamp_enum(impression, _VALID_IMPRESSIONS, "indeterminate"),
-        "overall_confidence": round(impression_conf, 2),
+        "overall_confidence": _round(impression_conf, 2),
         "combined_mask_ref": f"{subject_id}_combined_mask.nii.gz",
     }
 

@@ -23,7 +23,9 @@ sys.path.insert(0, str(project_root))
 from src.data.isles22_dataset import ISLES22Dataset
 from src.data.transforms import get_val_transforms
 from src.eval.metrics import compute_all_metrics
+from src.eval.postprocess import remove_small_components
 from src.eval.stratified import stratified_evaluation
+from src.inference.tta import predict_with_tta
 from src.models.factory import create_model
 
 
@@ -34,6 +36,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu)")
     parser.add_argument("--output", type=str, default=None, help="Output JSON path")
     parser.add_argument("--config", type=str, default=None, help="Path to YAML config")
+    # Defaults reproduce the methodology behind the published metrics
+    # (see docs/EVALUATION_REPORT.md); pass --no-tta / --min-component-size 0 for raw output.
+    parser.add_argument(
+        "--no-tta",
+        dest="tta",
+        action="store_false",
+        help="Disable L-R flip test-time augmentation (enabled by default)",
+    )
+    parser.add_argument(
+        "--min-component-size",
+        type=int,
+        default=10,
+        help="Drop predicted components smaller than N voxels (0 disables)",
+    )
     return parser.parse_args()
 
 
@@ -71,6 +87,11 @@ def main() -> None:
     model.eval()
 
     logging.info("Model loaded from %s", args.checkpoint)
+    logging.info(
+        "TTA: %s | min component size: %d voxels",
+        "L-R flip" if args.tta else "off",
+        args.min_component_size,
+    )
 
     # Load val dataset (without transforms for raw masks)
     val_ds_raw = ISLES22Dataset(
@@ -103,12 +124,15 @@ def main() -> None:
         # Use transformed GT at model resolution (128x128x80)
         gt_tensor = sample["label"]
 
-        with torch.no_grad():
-            logits = model(image)
-            pred_prob = torch.sigmoid(logits)
-            pred_mask = (pred_prob > 0.5).float()
+        if args.tta:
+            pred_prob = predict_with_tta(model, image)
+        else:
+            with torch.no_grad():
+                pred_prob = torch.sigmoid(model(image))
 
-        pred_np = pred_mask[0, 0].cpu().numpy()
+        pred_np = (pred_prob > 0.5).float()[0, 0].cpu().numpy()
+        if args.min_component_size > 0:
+            pred_np = remove_small_components(pred_np, min_size=args.min_component_size)
         gt_np = (gt_tensor[0].numpy() > 0).astype(np.float32)
 
         predictions.append(pred_np)
