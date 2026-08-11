@@ -30,11 +30,25 @@ Acute ischemic stroke requires rapid and accurate MRI interpretation. Radiologis
 - Regulatory approval
 
 ## Success Criteria
-- Dice score > 0.60 (mean) on ISLES 2022
-- Lesion-wise recall > 0.85
-- Zero hallucinations in generated reports
-- QC gates block poor-quality inputs
 
-## Detailed requirements
+Status as of the current model (Attention U-Net, fold 0 validation — see
+[EVALUATION_REPORT.md](EVALUATION_REPORT.md)):
 
-See the full development plan for comprehensive specifications.
+| Criterion | Target | Actual | Met |
+|-----------|--------|--------|-----|
+| Dice (per-subject mean) on ISLES 2022 | > 0.60 | 0.691 | Yes |
+| Lesion-wise detection | recall > 0.85 | lesion F1 0.503, voxel sensitivity 0.697 | **No** |
+| Zero hallucinations in generated reports | required | template-only text, 5 validator cross-checks | Yes |
+| QC gates block poor-quality inputs | required | not implemented — see ADR-006 | **No** |
+
+The two unmet criteria are the honest state of the project, not an oversight.
+Lesion-wise detection is dominated by sub-millilitre lesions, where Dice is 0.377;
+the QC gate is specified in [DECISIONS.md](DECISIONS.md) (ADR-006) but exists only as
+a stub. Both are the top items on the roadmap below.
+
+## Roadmap
+
+1. Implement the QC gate and enforce the no-score policy from ADR-006
+2. Improve tiny-lesion detection (higher input resolution, deep supervision)
+3. Complete 5-fold cross-validation and report cross-fold variance
+4. Validate the V2 CT perfusion pipeline against real ISLES 2024 data

@@ -23,7 +23,17 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Data (large files — use DVC or download scripts)
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local working notes -- kept out of the published repository
+PROJECT_STATE.md
+CURRENT_TASK.md
+SESSION_START.md
+
+# Data (large files -- use DVC or download scripts)
 data/raw/
 data/processed/
 !data/**/.gitkeep

@@ -91,20 +91,34 @@ NIfTI files (DWI, ADC, FLAIR)
 
 ```
 src/
-  data/          Dataset class + MONAI transforms
-  preprocess/    Intensity normalization, registration
-  models/        3D U-Net architecture + losses (Dice, Focal, DiceFocal)
-  train/         Trainer, callbacks (checkpoint, early stopping)
-  eval/          Metrics (Dice, IoU, HD95, lesion F1), stratified evaluation
-  findings/      Structured findings extraction (volume, location, territory, mismatch)
-  report/        Template-based report generation + validator
-  inference/     End-to-end inference pipeline + visualization
-configs/         YAML configurations (model, training, augmentation)
-scripts/         CLI entry points (train, evaluate, smoke tests)
-demo/            Gradio web demo
-notebooks/       EDA, Kaggle training, evaluation notebooks
-data/splits/     5-fold cross-validation splits
+  data/            Dataset classes (ISLES 2022, SOOP, combined) + MONAI transforms
+  preprocess/      Intensity normalization, resampling, registration
+  models/          3D U-Net and Attention U-Net + losses (Dice, Focal, DiceFocal)
+  train/           Trainer, callbacks (checkpoint, early stopping)
+  eval/            Metrics (Dice, IoU, HD95, lesion F1), stratified evaluation
+  findings/        Structured findings extraction (volume, location, territory, mismatch)
+  report/          Template-based report generation + validator
+  inference/       End-to-end pipeline, TTA, REST API, visualization
+  v2_perfusion/    CT perfusion core/penumbra/mismatch (prototype)
+  qc/              Quality-control gate (specified, not implemented)
+configs/           YAML configurations (model, training, augmentation)
+scripts/           CLI entry points (train, evaluate, infer, smoke tests)
+demo/              Gradio web demo
+notebooks/         EDA, Kaggle training and evaluation notebooks
+docs/              Architecture, decision records, model card, evaluation report
+Training_results/  Curves, metrics and overlays for every run
+data/splits/       5-fold cross-validation splits
 ```
+
+## Documentation
+
+| Document | What it covers |
+|----------|----------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline stages, module responsibilities, what is and is not implemented |
+| [DECISIONS.md](docs/DECISIONS.md) | 12 architecture decision records — the alternatives, the reasoning, and how each decision turned out |
+| [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) | Stratified metrics, error analysis, known limitations |
+| [MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use, training data, performance, ethical considerations |
+| [PRD.md](docs/PRD.md) | Original product requirements |
 
 ## Quick Start
 
