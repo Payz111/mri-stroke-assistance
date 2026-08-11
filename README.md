@@ -260,4 +260,4 @@ MIT
 
 ## Author
 
-Rinat -- Neurologist & ML Engineer
+Paizutdin Mugutdinov -- Neurologist & ML Engineer
