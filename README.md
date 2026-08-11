@@ -36,7 +36,9 @@ Automated pipeline: **DWI + ADC + FLAIR -> lesion segmentation -> structured fin
 > test set. Reproduce with:
 > `python scripts/evaluate.py --checkpoint <ckpt> --config configs/experiment/attention_aug.yaml`
 
-See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for detailed stratified analysis.
+See [EVALUATION_REPORT.md](docs/EVALUATION_REPORT.md) for the detailed stratified analysis, and
+[Training_results/](Training_results/) for the raw artifacts behind every number — training
+curves, per-subject metrics and prediction overlays for each run, including the failed ones.
 
 ## What it does
 
