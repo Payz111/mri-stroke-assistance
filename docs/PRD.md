@@ -39,16 +39,14 @@ Status as of the current model (Attention U-Net, fold 0 validation — see
 | Dice (per-subject mean) on ISLES 2022 | > 0.60 | 0.691 | Yes |
 | Lesion-wise detection | recall > 0.85 | lesion F1 0.503, voxel sensitivity 0.697 | **No** |
 | Zero hallucinations in generated reports | required | template-only text, 5 validator cross-checks | Yes |
-| QC gates block poor-quality inputs | required | not implemented — see ADR-006 | **No** |
+| QC gates block poor-quality inputs | required | 4 gates enforced before the model; 0/250 false positives | Yes |
 
-The two unmet criteria are the honest state of the project, not an oversight.
-Lesion-wise detection is dominated by sub-millilitre lesions, where Dice is 0.377;
-the QC gate is specified in [DECISIONS.md](DECISIONS.md) (ADR-006) but exists only as
-a stub. Both are the top items on the roadmap below.
+The one unmet criterion is the honest state of the project, not an oversight.
+Lesion-wise detection is dominated by sub-millilitre lesions, where Dice is 0.377 —
+see the limitations section of [EVALUATION_REPORT.md](EVALUATION_REPORT.md).
 
 ## Roadmap
 
-1. Implement the QC gate and enforce the no-score policy from ADR-006
+1. Complete 5-fold cross-validation and report cross-fold variance
 2. Improve tiny-lesion detection (higher input resolution, deep supervision)
-3. Complete 5-fold cross-validation and report cross-fold variance
-4. Validate the V2 CT perfusion pipeline against real ISLES 2024 data
+3. Validate the V2 CT perfusion pipeline against real ISLES 2024 data

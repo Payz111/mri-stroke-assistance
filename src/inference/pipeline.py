@@ -17,6 +17,7 @@ from scipy.ndimage import zoom
 from src.data.transforms import get_val_transforms
 from src.findings.builder import build_findings
 from src.models.factory import create_model
+from src.qc.qc_pipeline import QCPipeline
 from src.report.generator import generate_report
 from src.report.validator import validate_report
 
@@ -123,6 +124,8 @@ def run_inference(
     metadata: dict[str, Any],
     device: str = "cpu",
     threshold: float = 0.5,
+    run_qc: bool = True,
+    qc_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the full inference pipeline on a single subject.
 
@@ -138,12 +141,41 @@ def run_inference(
         Device for inference.
     threshold:
         Probability threshold.
+    run_qc:
+        Apply the quality-control gate first. On a critical failure the
+        pipeline declines to predict (ADR-006) and returns ``pred_mask``,
+        ``findings`` and ``validation`` as None, with ``report`` explaining
+        why. Set False only to inspect raw model behaviour.
+    qc_config:
+        Threshold overrides for :class:`~src.qc.qc_pipeline.QCPipeline`.
 
     Returns
     -------
     dict
-        Keys: ``pred_mask``, ``findings``, ``report``, ``validation``.
+        Keys: ``qc``, ``pred_mask``, ``findings``, ``report``, ``validation``.
+        Every key is always present; the last four are None when QC blocks.
     """
+    # Step 0: Quality control -- refuse rather than guess on unreadable input
+    qc_report = None
+    if run_qc:
+        qc_report = QCPipeline(qc_config).evaluate(
+            {
+                "dwi": dwi,
+                "adc": adc,
+                "flair": flair,
+                "spacing": metadata.get("spacing"),
+                "metadata": metadata,
+            }
+        )
+        if not qc_report.passed:
+            return {
+                "qc": qc_report.to_dict(),
+                "pred_mask": None,
+                "findings": None,
+                "report": qc_report.summary_text(),
+                "validation": None,
+            }
+
     # Step 1: Model prediction
     pred_mask = predict_mask(model, dwi, adc, flair, device, threshold)
 
@@ -175,6 +207,7 @@ def run_inference(
     validation = validate_report(report, findings)
 
     return {
+        "qc": qc_report.to_dict() if qc_report is not None else None,
         "pred_mask": pred_mask,
         "findings": findings,
         "report": report,

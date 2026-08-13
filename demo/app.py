@@ -144,6 +144,12 @@ def _run_analysis(dwi_path, adc_path, flair_path):
     findings = result["findings"]
     validation = result["validation"]
 
+    # Quality control declined to produce a prediction (ADR-006). Show the
+    # refusal and the failed checks; there is no mask to draw.
+    if result["pred_mask"] is None:
+        qc_str = json.dumps(result["qc"], default=str, indent=2)
+        return report, qc_str, None
+
     if not validation["valid"]:
         issues = "; ".join(validation["issues"])
         report += f"\n\n*** VALIDATION WARNING: {issues} ***"

@@ -7,13 +7,17 @@
 ## Pipeline Overview
 
 ```
-Input (NIfTI) -> Preprocessing -> [QC Gates] -> Segmentation Model
+Input (NIfTI) -> QC Gates -> Preprocessing -> Segmentation Model
     -> Postprocessing -> Structured Findings -> Report Generation -> Output
+                              |
+                     QC critical failure
+                              |
+                    no prediction, QC report only
 ```
 
 The shipped path (`src/inference/pipeline.py`, used by the demo and the REST API)
-currently runs: Preprocessing -> Model -> Findings -> Report -> Validation.
-QC gating is skipped entirely.
+runs the QC gate first: on a critical failure it returns no mask and no findings,
+only an explanation of which check failed.
 
 ## Modules
 
@@ -25,13 +29,17 @@ QC gating is skipped entirely.
 - Brain extraction (optional)
 - Intensity normalization per modality
 
-### QC Gates *[NOT IMPLEMENTED]*
-`src/qc/qc_pipeline.py` raises `NotImplementedError`; nothing calls it. Planned checks:
-- Missing modality check
-- Spacing/size sanity
-- Coverage check (posterior fossa)
-- DWI-ADC consistency check
-- FAIL = no-score, return QC report only
+### QC Gates
+`src/qc/qc_pipeline.py`, enforced in `run_inference` before the model runs:
+- `modalities` — DWI/ADC/FLAIR present, non-empty, not all-zero, not all-NaN
+- `spacing` — present, numeric, finite, within 0.3–6.0 mm
+- `coverage` — 3-D, at least 32×32×8 voxels, at least 2% non-zero
+- `dwi_adc_consistency` — DWI and ADC not the same series (r ≤ 0.98), shapes match
+- Critical failure = no-score: no mask, no findings, QC report only
+
+Measured on all 250 ISLES 2022 subjects: 0 blocked, 0.0% false positives.
+Pass `run_qc=False` to `run_inference` to bypass the gate when inspecting raw
+model behaviour.
 
 ### Segmentation Model
 - 3D U-Net (baseline)

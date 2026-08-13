@@ -70,16 +70,17 @@ class TestInferencePipeline:
         assert isinstance(result, dict)
 
     def test_output_contains_required_keys(self, model, volumes):
-        """Output must contain mask, findings, report, and validation."""
+        """Output must contain qc, mask, findings, report, and validation."""
         dwi, adc, flair = volumes
 
         result = run_inference(model, dwi, adc, flair, METADATA)
 
-        assert set(result) == {"pred_mask", "findings", "report", "validation"}
+        assert set(result) == {"qc", "pred_mask", "findings", "report", "validation"}
         assert result["pred_mask"].shape == dwi.shape
         assert isinstance(result["report"], str) and result["report"]
         assert "total_lesion_count" in result["findings"]
         assert "valid" in result["validation"]
+        assert result["qc"]["passed"] is True
 
     def test_handles_flair_with_different_resolution(self, model, volumes):
         """FLAIR is routinely acquired at a different resolution than DWI."""
@@ -90,3 +91,64 @@ class TestInferencePipeline:
         result = run_inference(model, dwi, adc, flair_hires, METADATA)
 
         assert result["pred_mask"].shape == dwi.shape
+
+
+class TestNoScorePolicy:
+    """ADR-006: a critical QC failure must yield no prediction at all."""
+
+    def test_bad_spacing_blocks_the_prediction(self, model, volumes):
+        dwi, adc, flair = volumes
+        bad_metadata = {"subject_id": "sub-bad", "spacing": (0.0, 0.0, 0.0)}
+
+        result = run_inference(model, dwi, adc, flair, bad_metadata)
+
+        assert result["pred_mask"] is None
+        assert result["findings"] is None
+        assert result["validation"] is None
+        assert result["qc"]["passed"] is False
+        assert result["qc"]["critical_failures"]
+
+    def test_refusal_text_explains_itself(self, model, volumes):
+        dwi, adc, flair = volumes
+        bad_metadata = {"subject_id": "sub-bad", "spacing": (0.0, 0.0, 0.0)}
+
+        report = run_inference(model, dwi, adc, flair, bad_metadata)["report"]
+
+        assert "QUALITY CONTROL: FAILED" in report
+        assert "spacing" in report
+
+    def test_duplicate_adc_blocks_the_prediction(self, model, volumes):
+        """Submitting DWI twice would silently corrupt the ADC finding."""
+        dwi, _, flair = volumes
+
+        result = run_inference(model, dwi, dwi.copy(), flair, METADATA)
+
+        assert result["pred_mask"] is None
+        assert any("identical" in f for f in result["qc"]["critical_failures"])
+
+    def test_empty_modality_blocks_the_prediction(self, model, volumes):
+        dwi, adc, _ = volumes
+        empty_flair = np.zeros(SHAPE, dtype=np.float32)
+
+        result = run_inference(model, dwi, adc, empty_flair, METADATA)
+
+        assert result["pred_mask"] is None
+
+    def test_qc_can_be_disabled_for_diagnostics(self, model, volumes):
+        """run_qc=False is the escape hatch for inspecting raw model behaviour."""
+        dwi, adc, flair = volumes
+        bad_metadata = {"subject_id": "sub-bad", "spacing": (0.0, 0.0, 0.0)}
+
+        result = run_inference(model, dwi, adc, flair, bad_metadata, run_qc=False)
+
+        assert result["qc"] is None
+        assert result["pred_mask"] is not None
+
+    def test_clean_input_is_not_blocked(self, model, volumes):
+        """The gate must not reject ordinary studies."""
+        dwi, adc, flair = volumes
+
+        result = run_inference(model, dwi, adc, flair, METADATA)
+
+        assert result["qc"]["passed"] is True
+        assert result["pred_mask"] is not None

@@ -125,7 +125,7 @@ remains a heuristic — no atlas registration — and the report reflects that b
 
 ## ADR-006: Quality control and the refusal policy
 
-**Date:** 2026-02-04 · **Status:** Accepted · **Outcome:** NOT IMPLEMENTED
+**Date:** 2026-02-04 · **Status:** Accepted · **Outcome:** Implemented 2026-08-12
 
 **Problem:** What should happen when the input data is of poor quality?
 
@@ -140,10 +140,39 @@ remains a heuristic — no atlas registration — and the report reflects that b
 better than guessing, and in a clinical setting a confident wrong answer is more
 dangerous than no answer at all. The QC report is informative on its own.
 
-**Outcome:** **The policy is not in force.** `src/qc/qc_pipeline.py` is a specified but
-empty stub that raises `NotImplementedError`, and nothing calls it — the inference path
-runs preprocessing → model → findings → report with no QC gate. This is the largest gap
-between the design and the implementation.
+**Outcome:** Implemented in `src/qc/qc_pipeline.py` and enforced in
+`run_inference`, which now runs the gate *before* the model. Four checks:
+
+| Check | Blocks on |
+|-------|-----------|
+| `modalities` | a required series missing, empty, all-zero or all-NaN |
+| `spacing` | missing, non-numeric, zero/NaN, or outside 0.3–6.0 mm |
+| `coverage` | volume below 32×32×8, not 3-D, or under 2% non-zero voxels |
+| `dwi_adc_consistency` | DWI and ADC identical, near-identical (r > 0.98), or shape-mismatched |
+
+On a critical failure the pipeline returns `pred_mask`, `findings` and `validation` as
+`None` with a report explaining which gate failed — no mask, no numbers, nothing to
+misread. The REST API answers `status="qc_failed"`, the Gradio demo shows the refusal,
+and `scripts/infer_single.py` exits with code 2.
+
+The fourth check earns its place: submitting the same series as both DWI and ADC is a
+realistic operator error that would otherwise produce a confident, entirely wrong
+ADC-restriction finding.
+
+Validated on all 250 ISLES 2022 subjects — a gate that rejects valid studies would be
+worse than no gate:
+
+| | |
+|---|---|
+| Subjects checked | 250 |
+| Blocked | **0** |
+| False-positive rate | **0.0%** |
+| DWI/ADC correlation on real data | min −0.835, median −0.644, max −0.038 |
+
+The correlation is negative on every real study, as the physics implies: restricted
+diffusion is bright on DWI and dark on ADC. The worst real case sits at −0.038 against
+a +0.98 threshold, so the duplicate-series check has roughly a full unit of headroom
+and cannot plausibly fire on a genuine pair.
 
 ---
 

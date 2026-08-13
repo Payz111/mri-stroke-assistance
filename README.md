@@ -60,6 +60,12 @@ curves, per-subject metrics and prediction overlays for each run, including the 
 ```
 NIfTI files (DWI, ADC, FLAIR)
         |
+   QC gate
+   - Modalities present and non-empty
+   - Plausible voxel spacing and field of view
+   - DWI/ADC not the same series
+   - Critical failure -> no prediction at all
+        |
    Preprocessing
    - Resample FLAIR to DWI space
    - Z-score normalization
@@ -222,7 +228,7 @@ ISLES 2022 key statistics:
 | **Human-in-the-loop** | By design — the tool outputs a *draft*; the physician decides |
 | **Evidence-linked** | Implemented — every lesion carries a mask ref and slice indices |
 | **Reproducible** | Partial — fixed seeds, YAML configs, 5-fold splits generated; only fold 0 trained so far |
-| **Fail-safe** | **Not implemented** — [qc_pipeline.py](src/qc/qc_pipeline.py) is a specified-but-empty stub; there is currently no QC gate rejecting poor-quality input |
+| **Fail-safe** | Implemented — [qc_pipeline.py](src/qc/qc_pipeline.py) gates every study before the model; a critical failure returns no mask and no findings, only an explanation ([ADR-006](docs/DECISIONS.md)) |
 
 ## Deployment
 

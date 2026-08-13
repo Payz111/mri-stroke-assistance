@@ -101,18 +101,33 @@ def main() -> None:
         threshold=args.threshold,
     )
 
+    report_path = args.output / "report.txt"
+    report_path.write_text(result["report"], encoding="utf-8")
+
+    # Quality control declined to predict (ADR-006): write the QC report and
+    # exit non-zero, so a calling script can tell a refusal from a success.
+    if result["pred_mask"] is None:
+        qc_path = args.output / "qc_report.json"
+        qc_path.write_text(json.dumps(result["qc"], indent=2), encoding="utf-8")
+        print("\n[QC FAILED] no prediction produced")
+        for reason in result["qc"]["critical_failures"]:
+            print(f"       ! {reason}")
+        print(f"\nWrote {qc_path.name} and {report_path.name} to {args.output}")
+        sys.exit(2)
+
     mask_path = args.output / "prediction_mask.nii.gz"
     nib.save(nib.Nifti1Image(result["pred_mask"], affine), mask_path)
 
     findings_path = args.output / "findings.json"
     findings_path.write_text(json.dumps(result["findings"], indent=2), encoding="utf-8")
 
-    report_path = args.output / "report.txt"
-    report_path.write_text(result["report"], encoding="utf-8")
+    if result["qc"] is not None:
+        qc_path = args.output / "qc_report.json"
+        qc_path.write_text(json.dumps(result["qc"], indent=2), encoding="utf-8")
 
     findings = result["findings"]
     validation = result["validation"]
-    print(f"\n[done] lesions: {findings['total_lesion_count']}")
+    print(f"\n[done] QC passed; lesions: {findings['total_lesion_count']}")
     print(f"       volume: {findings['total_lesion_volume_ml']:.1f} mL")
     print(f"       report valid: {validation['valid']}")
     if not validation["valid"]:

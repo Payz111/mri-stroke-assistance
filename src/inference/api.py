@@ -92,9 +92,10 @@ class InfoResponse(BaseModel):
 
 class PredictResponse(BaseModel):
     status: str
-    findings: dict[str, Any]
+    findings: dict[str, Any] | None = None
     report: str
-    validation: dict[str, Any]
+    validation: dict[str, Any] | None = None
+    qc: dict[str, Any] | None = None
     processing_time_s: float
 
 
@@ -251,7 +252,18 @@ async def predict(
 
         elapsed = time.time() - t0
 
-        # 6. Serialize findings (handle numpy/datetime types)
+        # 6a. Quality control declined to predict (ADR-006). This is a valid,
+        # deliberate outcome rather than an error, so it returns 200 with an
+        # explicit status the caller can branch on.
+        if result["pred_mask"] is None:
+            return PredictResponse(
+                status="qc_failed",
+                report=result["report"],
+                qc=result["qc"],
+                processing_time_s=round(elapsed, 2),
+            )
+
+        # 6b. Serialize findings (handle numpy/datetime types)
         findings_clean = json.loads(json.dumps(result["findings"], default=str))
 
         return PredictResponse(
@@ -259,6 +271,7 @@ async def predict(
             findings=findings_clean,
             report=result["report"],
             validation=result["validation"],
+            qc=result["qc"],
             processing_time_s=round(elapsed, 2),
         )
 
