@@ -19,11 +19,18 @@ class SOOPDataset(Dataset):
         ds004889/
           participants.tsv
           sub-{ID}/
-            anat/sub-{ID}_FLAIR.nii.gz
-            dwi/sub-{ID}_rec-TRACE_dwi.nii.gz
-            dwi/sub-{ID}_rec-ADC_dwi.nii.gz
+            anat/sub-{ID}_FLAIR.nii[.gz]
+            dwi/sub-{ID}_rec-TRACE_dwi.nii[.gz]
+            dwi/sub-{ID}_rec-ADC_dwi.nii[.gz]
           derivatives/lesion_masks/
-            sub-{ID}/dwi/sub-{ID}_space-TRACE_desc-lesion_mask.nii.gz
+            sub-{ID}/dwi/sub-{ID}_space-TRACE_desc-lesion_mask.nii[.gz]
+
+    Distributions of this dataset differ in ways that are invisible until
+    nothing loads, so path resolution tolerates all of them:
+
+    * compressed ``.nii.gz`` or plain ``.nii``
+    * a file wrapped in a directory of the same name, which some mirrors
+      produce: ``anat/sub-1_FLAIR.nii/sub-1_FLAIR.nii``
 
     Each item is a dict with keys: dwi, adc, flair, mask, metadata
     (same interface as ISLES22Dataset).
@@ -59,53 +66,98 @@ class SOOPDataset(Dataset):
         else:
             self.subject_ids = self._discover_subjects()
 
+    @staticmethod
+    def _resolve(directory: Path, stem: str) -> Path | None:
+        """Locate the NIfTI named *stem* in *directory*, whatever the layout.
+
+        Accepts ``.nii`` and ``.nii.gz``, and the case where the archive wrapped
+        the file inside a directory carrying the same name.
+        """
+        if not directory.is_dir():
+            return None
+
+        for suffix in (".nii.gz", ".nii"):
+            candidate = directory / f"{stem}{suffix}"
+            if candidate.is_file():
+                return candidate
+            if candidate.is_dir():
+                inner = sorted(p for p in candidate.glob("*.nii*") if p.is_file())
+                if inner:
+                    return inner[0]
+
+        matches = sorted(p for p in directory.glob(f"{stem}.nii*") if p.is_file())
+        return matches[0] if matches else None
+
     def _discover_subjects(self) -> list[str]:
-        """Find all subjects that have complete data (DWI + ADC + FLAIR + mask)."""
+        """Find all subjects that have complete data (DWI + ADC + FLAIR + mask).
+
+        Raises if *nothing* resolves. Silently returning an empty dataset is
+        how a whole training run once completed on the wrong data without
+        anyone noticing: the loader dropped 1323 subjects and said nothing.
+        """
+        subject_dirs = [d for d in sorted(self.data_root.iterdir()) if d.name.startswith("sub-")]
+
         subjects = []
-        for sub_dir in sorted(self.data_root.iterdir()):
-            if not sub_dir.name.startswith("sub-"):
-                continue
-            sub_id = sub_dir.name
+        missing_counts: dict[str, int] = {}
+        for sub_dir in subject_dirs:
             try:
-                self._get_paths(sub_id)
-                subjects.append(sub_id)
-            except FileNotFoundError:
-                continue
+                self._get_paths(sub_dir.name)
+                subjects.append(sub_dir.name)
+            except FileNotFoundError as exc:
+                key = str(exc).split(": ", 1)[-1]
+                missing_counts[key] = missing_counts.get(key, 0) + 1
+
+        if subject_dirs and not subjects:
+            raise FileNotFoundError(self._diagnose(subject_dirs, missing_counts))
+
         return subjects
+
+    def _diagnose(self, subject_dirs: list[Path], missing_counts: dict[str, int]) -> str:
+        """Explain why no subject resolved, listing what is actually on disk."""
+        lines = [
+            f"SOOPDataset found {len(subject_dirs)} sub-* directories under "
+            f"{self.data_root} but none had a complete set of files "
+            f"(require_mask={self.require_mask}).",
+            "",
+            "Missing-file tally:",
+        ]
+        for reason, count in sorted(missing_counts.items(), key=lambda kv: -kv[1])[:5]:
+            lines.append(f"  {count:5d} x {reason}")
+
+        sample = subject_dirs[0]
+        lines += ["", f"What is actually inside {sample.name}:"]
+        for sub in sorted(sample.rglob("*"))[:12]:
+            kind = "dir " if sub.is_dir() else "file"
+            lines.append(f"  {kind} {sub.relative_to(sample).as_posix()}")
+
+        lines += [
+            "",
+            "Check that data_root points at the ds004889 root (the directory that",
+            "directly contains the sub-* folders) and that the lesion masks live in",
+            "derivatives/lesion_masks/. Pass require_mask=False to train without masks.",
+        ]
+        return "\n".join(lines)
 
     def _get_paths(self, subject_id: str) -> dict[str, Path]:
         """Resolve file paths for a SOOP subject."""
         sub_dir = self.data_root / subject_id
 
-        # DWI (TRACE)
-        dwi_path = sub_dir / "dwi" / f"{subject_id}_rec-TRACE_dwi.nii.gz"
+        dwi_path = self._resolve(sub_dir / "dwi", f"{subject_id}_rec-TRACE_dwi")
+        adc_path = self._resolve(sub_dir / "dwi", f"{subject_id}_rec-ADC_dwi")
+        flair_path = self._resolve(sub_dir / "anat", f"{subject_id}_FLAIR")
 
-        # ADC
-        adc_path = sub_dir / "dwi" / f"{subject_id}_rec-ADC_dwi.nii.gz"
-
-        # FLAIR
-        flair_path = sub_dir / "anat" / f"{subject_id}_FLAIR.nii.gz"
-
-        # Lesion mask (in derivatives)
+        # Lesion mask (in derivatives); prefer acute-only, fall back to combined
         mask_dir = self.data_root / "derivatives" / "lesion_masks" / subject_id / "dwi"
-        # Prefer acute-only mask, fall back to combined
-        mask_acute = mask_dir / f"{subject_id}_space-TRACE_desc-lesionAcute_mask.nii.gz"
-        mask_combined = mask_dir / f"{subject_id}_space-TRACE_desc-lesion_mask.nii.gz"
+        mask_path = self._resolve(
+            mask_dir, f"{subject_id}_space-TRACE_desc-lesionAcute_mask"
+        ) or self._resolve(mask_dir, f"{subject_id}_space-TRACE_desc-lesion_mask")
 
-        if mask_acute.exists():
-            mask_path = mask_acute
-        elif mask_combined.exists():
-            mask_path = mask_combined
-        else:
-            mask_path = None
-
-        # Check required files
         missing = []
-        if not dwi_path.exists():
+        if dwi_path is None:
             missing.append("DWI")
-        if not adc_path.exists():
+        if adc_path is None:
             missing.append("ADC")
-        if not flair_path.exists():
+        if flair_path is None:
             missing.append("FLAIR")
         if self.require_mask and mask_path is None:
             missing.append("mask")
