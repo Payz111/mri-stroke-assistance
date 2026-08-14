@@ -102,7 +102,9 @@ def describe_tree(root: str | Path, max_depth: int = 7, _prefix: str = "") -> li
 
 def _fail(what: str, input_root: Path, hint: str) -> FileNotFoundError:
     tree = "\n".join(describe_tree(input_root)) or "  (nothing found)"
-    return FileNotFoundError(f"{what} not found under {input_root}.\n\nInput tree:\n{tree}\n\n{hint}")
+    return FileNotFoundError(
+        f"{what} not found under {input_root}.\n\nInput tree:\n{tree}\n\n{hint}"
+    )
 
 
 def locate_isles(input_root: str | Path = DEFAULT_INPUT_ROOT) -> tuple[Path, Path]:

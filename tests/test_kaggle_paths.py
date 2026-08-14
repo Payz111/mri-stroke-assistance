@@ -23,8 +23,12 @@ def build_input(tmp_path, isles_owner="orvile", soop_owner="payzutdinmugutdinov"
     root = tmp_path / "input"
 
     isles = (
-        root / "datasets" / isles_owner / "isles-2022-brain-stoke-dataset"
-        / "ISLES-2022" / "ISLES-2022"
+        root
+        / "datasets"
+        / isles_owner
+        / "isles-2022-brain-stoke-dataset"
+        / "ISLES-2022"
+        / "ISLES-2022"
     )
     for i in (1, 2, 3):
         (isles / f"sub-strokecase{i:04d}" / "ses-0001" / "dwi").mkdir(parents=True)
