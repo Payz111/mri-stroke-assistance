@@ -128,29 +128,53 @@ def get_train_transforms(aug_config: dict[str, Any] | None = None) -> T.Compose:
         after stacking modalities.  With 1300+ combined cases (ISLES+SOOP)
         mild augmentation helps; aggressive augmentation hurt on 250 cases.
     """
+    return T.Compose(
+        list(get_deterministic_transforms().transforms)
+        + list(get_augment_transforms().transforms)
+        + [T.ToTensord(keys=["image", "label"])]
+    )
+
+
+def get_deterministic_transforms(config: dict[str, Any] | None = None) -> T.Compose:
+    """The part of the pipeline whose output depends only on the input file.
+
+    Resampling and normalising a 139 MB FLAIR down to a 128x128x80 volume costs
+    roughly 580 ms per sample and is repeated every epoch for no benefit. Split
+    out so it can be computed once and cached; see
+    :class:`src.data.cached_dataset.CachedDataset`.
+    """
     spatial_size = SPATIAL_SIZE
+    if config and "spatial_size" in config:
+        spatial_size = tuple(config["spatial_size"])
 
-    base = [
-        ResampleToReference(reference_key="dwi"),
-        NormalizePerModality(keys=IMAGE_KEYS),
-        StackModalities(),
-        T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
-        T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
-    ]
+    return T.Compose(
+        [
+            ResampleToReference(reference_key="dwi"),
+            NormalizePerModality(keys=IMAGE_KEYS),
+            StackModalities(),
+            T.SpatialPadd(keys=["image", "label"], spatial_size=spatial_size),
+            T.CenterSpatialCropd(keys=["image", "label"], roi_size=spatial_size),
+        ]
+    )
 
-    # Mild augmentation (applied after crop so we augment at model resolution)
-    aug = [
-        T.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
-        T.RandFlipd(keys=["image", "label"], prob=0.3, spatial_axis=1),
-        T.RandGaussianNoised(keys=["image"], prob=0.2, std=0.05),
-        T.RandAdjustContrastd(keys=["image"], prob=0.2, gamma=(0.7, 1.5)),
-    ]
 
-    tail = [
-        T.ToTensord(keys=["image", "label"]),
-    ]
+def get_augment_transforms() -> T.Compose:
+    """Random augmentation, applied at model resolution after the crop.
 
-    return T.Compose(base + aug + tail)
+    Must never be cached: every epoch has to draw fresh randomness, otherwise
+    the model sees one frozen augmentation of each subject forever.
+
+    Mild on purpose -- with 1300+ combined cases this helps, while aggressive
+    augmentation cost 20 points of Dice on 250 cases (ADR-012).
+    """
+    return T.Compose(
+        [
+            T.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
+            T.RandFlipd(keys=["image", "label"], prob=0.3, spatial_axis=1),
+            T.RandGaussianNoised(keys=["image"], prob=0.2, std=0.05),
+            T.RandAdjustContrastd(keys=["image"], prob=0.2, gamma=(0.7, 1.5)),
+        ]
+    )
 
 
 def get_val_transforms(config: dict[str, Any] | None = None) -> T.Compose:
