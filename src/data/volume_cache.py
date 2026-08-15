@@ -22,8 +22,9 @@ Augmentation is never stored here; it must redraw every epoch.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -83,12 +84,8 @@ def build_pack(
 
     total = len(subject_ids)
     depth, height, width = spatial_size
-    images = _open_memmap(
-        out_dir / IMAGES_FILE, np.float16, (total, 3, depth, height, width), "w+"
-    )
-    labels = _open_memmap(
-        out_dir / LABELS_FILE, np.uint8, (total, 1, depth, height, width), "w+"
-    )
+    images = _open_memmap(out_dir / IMAGES_FILE, np.float16, (total, 3, depth, height, width), "w+")
+    labels = _open_memmap(out_dir / LABELS_FILE, np.uint8, (total, 1, depth, height, width), "w+")
 
     deterministic = get_deterministic_transforms({"spatial_size": list(spatial_size)})
 
