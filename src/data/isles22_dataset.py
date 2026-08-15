@@ -52,19 +52,36 @@ class ISLES22Dataset(Dataset):
         self,
         data_root: str | Path,
         derivatives_root: str | Path,
-        split_file: str | Path,
+        split_file: str | Path | None,
         split: str = "train",
         transform: Any | None = None,
     ) -> None:
+        """Initialise the dataset.
+
+        Parameters
+        ----------
+        split_file:
+            Path to a fold JSON. ``None`` enumerates every subject on disk,
+            which is what the volume cache needs -- the cache is shared by all
+            folds, so it must not be built from one fold's split.
+        split:
+            Key to read from the split file ("train" or "val"). Ignored when
+            *split_file* is None.
+        """
         self.data_root = Path(data_root)
         self.derivatives_root = Path(derivatives_root)
         self.transform = transform
 
-        # Load split
-        with open(split_file) as f:
-            split_data = json.load(f)
-
-        self.subject_ids = split_data[split]
+        if split_file is None:
+            self.subject_ids = sorted(
+                d.name for d in self.data_root.iterdir() if d.name.startswith("sub-")
+            )
+            if not self.subject_ids:
+                raise FileNotFoundError(f"No sub-* directories under {self.data_root}")
+        else:
+            with open(split_file) as f:
+                split_data = json.load(f)
+            self.subject_ids = split_data[split]
 
     def __len__(self) -> int:
         return len(self.subject_ids)
