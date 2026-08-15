@@ -29,6 +29,10 @@ def compute_dice(pred: torch.Tensor, target: torch.Tensor, smooth: float = 1.0) 
 class Trainer:
     """High-level trainer that manages the train/val loop."""
 
+    #: Time held back from the budget for writing curves, metadata and the
+    #: checkpoint copies once the loop ends.
+    SAVE_MARGIN_SECONDS = 600
+
     def __init__(
         self,
         model: nn.Module,
@@ -41,6 +45,7 @@ class Trainer:
         callbacks: Sequence[Any] | None = None,
         config: dict[str, Any] | None = None,
         use_amp: bool = False,
+        max_hours: float | None = None,
     ) -> None:
         self.model = model.to(device)
         self.optimizer = optimizer
@@ -52,6 +57,11 @@ class Trainer:
         self.callbacks = list(callbacks or [])
         self.config = config or {}
         self.history: list[dict[str, float]] = []
+        # Wall-clock budget. Hosted runners kill the process outright when their
+        # own limit expires (Kaggle: 12 h, SIGKILL), which loses the curves, the
+        # metadata and any epoch in flight. Stopping ourselves first turns that
+        # into a clean finish with everything written.
+        self.max_hours = max_hours
 
         # Mixed precision training (AMP)
         self.use_amp = use_amp and device != "cpu"
@@ -126,8 +136,12 @@ class Trainer:
     def fit(self, num_epochs: int) -> dict[str, Any]:
         """Execute the full training loop."""
         logger.info("Starting training for %d epochs on %s", num_epochs, self.device)
+        if self.max_hours is not None:
+            logger.info("Wall-clock budget: %.1f h", self.max_hours)
         best_val_dice = 0.0
         best_epoch = 0
+        started = time.time()
+        stopped_on_time = False
 
         for epoch in range(num_epochs):
             t0 = time.time()
@@ -170,6 +184,26 @@ class Trainer:
             if stop:
                 break
 
+            # Stop while there is still time to save, rather than being killed
+            # mid-epoch. Continue only if another epoch plus the save margin
+            # still fits, so on exit at least SAVE_MARGIN_SECONDS remains for
+            # writing curves, metadata and the checkpoint copies.
+            if self.max_hours is not None:
+                spent = time.time() - started
+                remaining = self.max_hours * 3600 - spent
+                if remaining < elapsed + self.SAVE_MARGIN_SECONDS:
+                    stopped_on_time = True
+                    logger.warning(
+                        "Wall-clock budget reached after %.1f h (%d epochs). "
+                        "Stopping now so results are saved; the last epoch took %.0fs "
+                        "and only %.0fs remain.",
+                        spent / 3600,
+                        epoch + 1,
+                        elapsed,
+                        max(remaining, 0),
+                    )
+                    break
+
         logger.info(
             "Training complete. Best val_dice=%.4f at epoch %d",
             best_val_dice,
@@ -181,4 +215,5 @@ class Trainer:
             "best_epoch": best_epoch,
             "history": self.history,
             "total_epochs": len(self.history),
+            "stopped_on_time_budget": stopped_on_time,
         }
