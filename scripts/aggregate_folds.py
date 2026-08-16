@@ -99,9 +99,7 @@ def main() -> None:
         values, counts = [], []
         for run in runs:
             by_size = run["data"].get("by_size", {})
-            entry = next(
-                (v for k, v in by_size.items() if k.split()[0] == size), None
-            )
+            entry = next((v for k, v in by_size.items() if k.split()[0] == size), None)
             if not entry:
                 continue
             values.append(entry.get("dice_mean", entry.get("dice")))
