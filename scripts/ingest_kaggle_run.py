@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
-import sys
 import zipfile
 from pathlib import Path
 
@@ -75,8 +74,10 @@ def reassemble_checkpoint(run_dir: Path) -> Path:
     with zipfile.ZipFile(target, "w", zipfile.ZIP_STORED) as archive:
         for path in files:
             archive.write(path, arcname=f"best_model/{path.relative_to(expanded).as_posix()}")
-    print(f"reassembled {len(files)} files -> checkpoints/best_model.pth "
-          f"({target.stat().st_size / 1e6:.1f} MB)")
+    print(
+        f"reassembled {len(files)} files -> checkpoints/best_model.pth "
+        f"({target.stat().st_size / 1e6:.1f} MB)"
+    )
     return target
 
 
@@ -111,7 +112,10 @@ def plot_curves(run_dir: Path, meta: dict, history: list[dict]) -> Path:
     axes[1].plot(epochs, [h["train_dice"] for h in history], label="Train")
     axes[1].plot(epochs, [h["val_dice"] for h in history], label="Val")
     axes[1].axhline(
-        PREVIOUS_BEST, color="gray", linestyle="--", alpha=0.7,
+        PREVIOUS_BEST,
+        color="gray",
+        linestyle="--",
+        alpha=0.7,
         label=f"Published run ({PREVIOUS_BEST})",
     )
     axes[1].scatter(
